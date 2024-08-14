@@ -18,3 +18,8 @@ export function formatPhoneNumberDt(rowData, columnName) {
     const formattedNumber = `(${areaCode}) ${part1} ${part2}-${part3}`;
     return formattedNumber;
 }
+
+export function formatRegistrationNumberDt(rowData, columnName) {
+    const registrationNumberFmt = rowData[columnName].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    return registrationNumberFmt;
+}
