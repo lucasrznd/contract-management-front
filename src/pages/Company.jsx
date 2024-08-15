@@ -1,6 +1,7 @@
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import AppFooter from "../components/footer/AppFooter";
 import AppMenu from "../components/menu/AppMenu";
+import CompanyForm from "../components/company/CompanyForm";
 
 export default function CompanyPage() {
     return <div>
@@ -12,9 +13,7 @@ export default function CompanyPage() {
 
         <AppMenu />
 
-        <div className="flex align-items-center justify-content-center">
-            <h1>Company Page</h1>
-        </div>
+        <CompanyForm />
 
         <AppFooter />
     </div>
