@@ -3,6 +3,11 @@ export function clearPhoneNumber(number) {
     return formattedNumber;
 }
 
+export function clearRegistrationNumber(registrationNumber) {
+    const registrationNumberFmt = registrationNumber.replace(/[^\w\s]/gi, '');
+    return registrationNumberFmt;
+}
+
 export function formatPhoneNumberDt(rowData, columnName) {
     const cleanNumber = rowData[columnName].replace(/\D/g, '');
 
