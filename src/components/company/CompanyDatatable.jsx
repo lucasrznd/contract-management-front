@@ -12,7 +12,7 @@ import { useCompanyDelete } from '../../hooks/company/useCompanyDelete';
 import { errorMsg, warnMsg } from '../../functions/ToastMessage';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { useCompanyFindAll } from '../../hooks/company/useCompanyFindAll';
-import { formatPhoneNumberDt, formatRegistrationNumberDt } from '../../functions/StringUtils';
+import { buildEncodedStringAddress, formatPhoneNumberDt, formatRegistrationNumberDt } from '../../functions/StringUtils';
 
 export default function CompanyDatatable(props) {
     const [company, setCompany] = useState({});
@@ -60,6 +60,20 @@ export default function CompanyDatatable(props) {
         );
     };
 
+    const addressBodyTemplate = (rowData) => {
+        const address = buildEncodedStringAddress(rowData);
+
+        return (
+            <Button icon="pi pi-map-marker" rounded text severity="success" onClick={() => searchAddressOnMaps(address)} />
+        );
+    }
+
+    const searchAddressOnMaps = (parameter) => {
+        const searchUrl = 'https://www.google.com/maps/search/?api=1&query=' + parameter;
+
+        window.open(searchUrl, 'blank');
+    }
+
     const showDatatable = () => {
         if (isLoading) {
             return <div className='flex align-items-center justify-content-center'>
@@ -85,6 +99,7 @@ export default function CompanyDatatable(props) {
                     <Column field="stateRegistration" header="Inscrição Estadual" align="center" alignHeader="center" />
                     <Column field="phoneNumber" body={(rowData) => formatPhoneNumberDt(rowData, 'phoneNumber')} header="Telefone" align="center" alignHeader="center" />
                     <Column field="email" body={(rowData) => rowData.email.toLowerCase()} header="Email" align="center" alignHeader="center" />
+                    <Column field="street" body={(rowData) => addressBodyTemplate(rowData)} header="Endereço" align="center" alignHeader="center" />
                     <Column body={tableActions} exportable={false} style={{ minWidth: '12rem' }} align="center" header="Ações" alignHeader="center"></Column>
                 </DataTable>
             </div>
