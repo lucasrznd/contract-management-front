@@ -31,6 +31,7 @@ export default function CompanyForm(props) {
             streetName: '',
             avenueName: '',
             number: undefined,
+            city: '',
             state: '',
             zipCode: undefined
         },
@@ -67,6 +68,10 @@ export default function CompanyForm(props) {
 
             if (!data.number) {
                 errors.number = 'Número é obrigatório.';
+            }
+
+            if (!data.city) {
+                errors.city = 'Cidade é obrigatória.';
             }
 
             if (!data.state) {
@@ -119,6 +124,10 @@ export default function CompanyForm(props) {
         }
     }
 
+    const onChangeZipCode = async (e) => {
+        formik.setFieldValue('zipCode', e);
+    }
+
     useEffect(() => {
         closeDialogForm();
     }, [isSuccess]);
@@ -141,6 +150,7 @@ export default function CompanyForm(props) {
         formik.setFieldValue('streetName', '');
         formik.setFieldValue('avenueName', '');
         formik.setFieldValue('number', undefined);
+        formik.setFieldValue('city', '');
         formik.setFieldValue('state', '');
         formik.setFieldValue('zipCode', undefined);
         setVisibleDialog(true);
@@ -162,6 +172,7 @@ export default function CompanyForm(props) {
         formik.setFieldValue('streetName', company.streetName);
         formik.setFieldValue('avenueName', company.avenueName);
         formik.setFieldValue('number', company.number);
+        formik.setFieldValue('city', company.city);
         formik.setFieldValue('state', company.state);
         formik.setFieldValue('zipCode', company.zipCode);
         setVisibleDialog(true);
@@ -355,6 +366,25 @@ export default function CompanyForm(props) {
                             </div>
 
                             <div className="field col-12 md:col-6">
+                                <label htmlFor='zipCode' style={{ marginBottom: '0.5rem' }}>CEP:</label>
+                                <div className="p-inputgroup flex-1">
+                                    <span className="p-inputgroup-addon">
+                                        <i className="pi pi-map-marker"></i>
+                                    </span>
+                                    <InputMask
+                                        id="zipCode"
+                                        name="zipCode"
+                                        value={formik.values.zipCode}
+                                        onChange={(e) => onChangeZipCode(e.value)}
+                                        mask="99999-999"
+                                        placeholder="86400-000"
+                                        className={isFormFieldValid('zipCode') ? "p-invalid uppercase" : "uppercase"}
+                                    />
+                                </div>
+                                {getFormErrorMessage('zipCode')}
+                            </div>
+
+                            <div className="field col-12 md:col-6">
                                 <label htmlFor='state' style={{ marginBottom: '0.5rem' }}>Estado:</label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
@@ -365,28 +395,27 @@ export default function CompanyForm(props) {
                                         name="state"
                                         value={formik.values.state}
                                         onChange={formik.handleChange}
+                                        disabled
                                         className={isFormFieldValid('state') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('state')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='zipCode' style={{ marginBottom: '0.5rem' }}>CEP:</label>
+                                <label htmlFor='city' style={{ marginBottom: '0.5rem' }}>Cidade:</label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-map-marker"></i>
                                     </span>
-                                    <InputMask
-                                        id="zipCode"
-                                        name="zipCode"
-                                        value={formik.values.zipCode}
+                                    <InputText
+                                        id="city"
+                                        name="city"
+                                        value={formik.values.city}
                                         onChange={formik.handleChange}
-                                        mask="99999-999"
-                                        placeholder="86400-000"
-                                        className={isFormFieldValid('zipCode') ? "p-invalid uppercase" : "uppercase"}
-                                    />
+                                        disabled
+                                        className={isFormFieldValid('city') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
-                                {getFormErrorMessage('zipCode')}
+                                {getFormErrorMessage('city')}
                             </div>
                         </div>
                     </form>
