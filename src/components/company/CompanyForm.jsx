@@ -12,6 +12,7 @@ import { useCompanyPut } from "../../hooks/company/useCompanyPut";
 import { InputNumber } from "primereact/inputnumber";
 import { clearPhoneNumber, clearRegistrationNumber } from "../../functions/StringUtils";
 import { errorMessageFormatter } from "../../functions/MessageFormatter";
+import axios from "axios";
 
 export default function CompanyForm(props) {
     const [visibleDialog, setVisibleDialog] = useState(false);
@@ -126,6 +127,14 @@ export default function CompanyForm(props) {
 
     const onChangeZipCode = async (e) => {
         formik.setFieldValue('zipCode', e);
+
+        // Remove zipCode's special characters and do a request to viacep API
+        var cleanZipCode = e.replace(/[^\d]/g, "");
+        if (cleanZipCode.length === 8) {
+            const response = await axios.get('https://viacep.com.br/ws/' + cleanZipCode + '/json/');
+            formik.setFieldValue('state', response.data.uf);
+            formik.setFieldValue('city', response.data.localidade);
+        }
     }
 
     useEffect(() => {
