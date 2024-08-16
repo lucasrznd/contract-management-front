@@ -131,9 +131,23 @@ export default function CompanyForm(props) {
         // Remove zipCode's special characters and do a request to viacep API
         var cleanZipCode = e.replace(/[^\d]/g, "");
         if (cleanZipCode.length === 8) {
-            const response = await axios.get('https://viacep.com.br/ws/' + cleanZipCode + '/json/');
-            formik.setFieldValue('state', response.data.uf);
-            formik.setFieldValue('city', response.data.localidade);
+            try {
+                const response = await axios.get('https://viacep.com.br/ws/' + cleanZipCode + '/json/');
+
+                if (response.data.erro === 'true') {
+                    errorMsg(toast, 'CEP inválido.');
+                    return;
+                }
+                formik.setFieldValue('state', response.data.uf);
+                formik.setFieldValue('city', response.data.localidade);
+            } catch (error) {
+                errorMsg(toast, 'Erro de conexão com o servidor.');
+            }
+        }
+
+        if (formik.values.zipCode === '') {
+            formik.setFieldValue('state', '');
+            formik.setFieldValue('city', '');
         }
     }
 
@@ -210,7 +224,7 @@ export default function CompanyForm(props) {
 
             <CompanyDatatable startContent={startContent} companyDetails={companyDetails} toast={toast} />
 
-            <Dialog header="Detalhes da Empresa" visible={visibleDialog} style={{ width: '45vw', minWidth: "45vw" }} breakpoints={{ '960px': '65vw', '641px': '70vw' }} onHide={() => setVisibleDialog(false)}
+            <Dialog header="Detalhes da Empresa" visible={visibleDialog} style={{ width: '45vw', minWidth: "45vw" }} breakpoints={{ '1200px': '65vw', '641px': '70vw' }} onHide={() => setVisibleDialog(false)}
                 footer={modalFooter} draggable={false}>
                 <div className="card p-fluid">
                     <form onSubmit={formik.handleSubmit}>
