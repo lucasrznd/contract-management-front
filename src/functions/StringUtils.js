@@ -30,8 +30,8 @@ export function formatRegistrationNumberDt(rowData, columnName) {
 }
 
 export function buildEncodedStringAddress(rowData) {
-    const addressString = rowData.streetName + ', ' + rowData.number + ', ' + rowData.avenueName;
-    const encodedAddres = encodeURI(addressString);
+    const addressString = rowData.streetName + ', ' + rowData.number + ', ' + rowData.avenueName + ', ' + rowData.zipCode;
+    const encodedAddress = encodeURI(addressString);
 
-    return encodedAddres;
+    return encodedAddress;
 }
