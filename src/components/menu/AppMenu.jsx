@@ -5,10 +5,15 @@ import logo from "../../../src/assets/images/logo-horizontal.png";
 export default function AppMenu() {
     const items = [
         {
+            label: 'Contratos',
+            icon: 'pi pi-folder-open',
+            url: '/contratos'
+        },
+        {
             label: 'Empresas',
             icon: 'pi pi-building',
             url: '/empresas'
-        },
+        }
     ];
 
     const start = <a href="/"><img alt="logo" src={logo} height={60} className="mr-2" /></a>
