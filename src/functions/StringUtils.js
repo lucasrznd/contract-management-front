@@ -50,3 +50,19 @@ export function parseDate(date) {
     // month is 0-based in JavaScript Date, so we subtract 1 from month
     return new Date(year, month - 1, day);
 }
+
+export function dateNow() {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = yyyy + '-' + mm + '-' + dd;
+    return today;
+}
+
+export function daysBetweenEndDate(endDate) {
+    const daysQuantity = Number(endDate.substring(8)) - Number(dateNow().substring(8));
+
+    return daysQuantity;
+}
