@@ -31,7 +31,7 @@ export default function ContractForm() {
         initialValues: {
             id: undefined,
             clientCompany: undefined,
-            seller: '',
+            sellerName: '',
             advertisingOrder: undefined,
             quantitySpotDay: undefined,
             spotDuration: undefined,
@@ -51,8 +51,8 @@ export default function ContractForm() {
                 errors.clientCompany = 'Empresa é obrigatória';
             }
 
-            if (!data.seller) {
-                errors.seller = 'Vendedor é obrigatório';
+            if (!data.sellerName) {
+                errors.sellerName = 'Vendedor é obrigatório';
             }
 
             if (!data.advertisingOrder) {
@@ -174,7 +174,7 @@ export default function ContractForm() {
         formik.resetForm();
         formik.setFieldValue('id', undefined);
         formik.setFieldValue('clientCompany', undefined);
-        formik.setFieldValue('seller', '');
+        formik.setFieldValue('sellerName', '');
         formik.setFieldValue('advertisingOrder', undefined);
         formik.setFieldValue('quantitySpotDay', undefined);
         formik.setFieldValue('spotDuration', undefined);
@@ -193,13 +193,13 @@ export default function ContractForm() {
         formik.resetForm();
         formik.setFieldValue('id', contract.id);
         formik.setFieldValue('clientCompany', findCompanyInList(contract.companyBusinessName));
-        formik.setFieldValue('seller', contract.seller);
+        formik.setFieldValue('sellerName', contract.sellerName);
         formik.setFieldValue('advertisingOrder', contract.advertisingOrder);
         formik.setFieldValue('quantitySpotDay', contract.quantitySpotDay);
         formik.setFieldValue('spotDuration', Number(contract.spotDuration).toFixed(2));
         formik.setFieldValue('startDate', parseDate(contract.startDate));
         formik.setFieldValue('endDate', parseDate(contract.endDate));
-        formik.setFieldValue('monthlyPrice', parseFloat(contract.monthlyPriceFmt.substring(3))); 
+        formik.setFieldValue('monthlyPrice', parseFloat(contract.monthlyPriceFmt.substring(3)));
         formik.setFieldValue('flashQuantity', contract.flashQuantity);
         formik.setFieldValue('newspaperParticipation', contract.newspaperParticipation);
         formik.setFieldValue('paymentMethod', contract.paymentMethod);
@@ -256,21 +256,21 @@ export default function ContractForm() {
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='seller' style={{ marginBottom: '0.5rem' }}>Vendedor</label>
+                                <label htmlFor='sellerName' style={{ marginBottom: '0.5rem' }}>Vendedor</label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-user"></i>
                                     </span>
                                     <Dropdown
-                                        id="seller"
-                                        name="seller"
-                                        value={formik.values.seller}
+                                        id="sellerName"
+                                        name="sellerName"
+                                        value={formik.values.sellerName}
                                         onChange={formik.handleChange}
                                         options={["Cristiano", "Paulao"]}
                                         showClear placeholder="SELECIONE"
-                                        className={isFormFieldValid('newspaperParticipation') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={isFormFieldValid('sellerName') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
-                                {getFormErrorMessage('newspaperParticipation')}
+                                {getFormErrorMessage('sellerName')}
                             </div>
 
                             <div className="field col-12 md:col-6">
