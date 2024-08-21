@@ -3,7 +3,7 @@ import { Panel } from 'primereact/panel';
 import { Toolbar } from 'primereact/toolbar';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
 import DeleteDialog from '../dialog/DeleteDialog';
 import { useContractFindAll } from "../../hooks/contract/useContractFindAll";
@@ -11,12 +11,15 @@ import { useContractDelete } from "../../hooks/contract/useContractDelete";
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { addLocale } from 'primereact/api';
 import { dateFormatDt } from '../../functions/StringUtils';
+import serverErrorImage from "../../assets/images/server-error.png";
+import { Toast } from 'primereact/toast';
 
 export default function ContractDatatable(props) {
     const [contract, setContract] = useState({});
     const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useContractFindAll();
     const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useContractDelete();
     const [deleteContractDialog, setDeleteContractDialog] = useState(false);
+    const toast = useRef(null);
 
     addLocale('pt-BR', {
         firstDayOfWeek: 0,
@@ -38,10 +41,16 @@ export default function ContractDatatable(props) {
         hideDeleteDialog();
     }, [isSucessDeleting]);
 
+    useEffect(() => {
+        if (isErrorFindingAll) {
+            errorMsg(toast, 'Erro de conexão com servidor.');
+        }
+    }, [isErrorFindingAll]);
+
     const deleteContract = () => {
         mutate(contract.id);
 
-        isErrorDeleting ? errorMsg(props.toast, 'Erro ao remover contrato.') : warnMsg(props.toast, 'Contrato removido com sucesso.');
+        isErrorDeleting ? errorMsg(toast, 'Erro ao remover contrato.') : warnMsg(toast, 'Contrato removido com sucesso.');
     }
 
     const confirmDeleteContract = (contract) => {
@@ -72,10 +81,6 @@ export default function ContractDatatable(props) {
             </div>
         }
 
-        if (isErrorFindingAll) {
-            errorMsg(props.toast, 'Erro de conexão com servidor.');
-        }
-
         if (isSuccessFindingAll && Array.isArray(data)) {
             return <div className="card">
                 <DataTable value={data} tableStyle={{ minWidth: '50rem' }}
@@ -95,14 +100,23 @@ export default function ContractDatatable(props) {
                 </DataTable>
             </div>
         }
-        return <div className='flex align-items-center justify-content-center'>
-            <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
-            <h2 className='text-red-500'>Erro de conexão com servidor.</h2>
+
+        return <div>
+            <div className='flex align-items-center justify-content-center'>
+                <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
+                <h2 className='text-red-500'>Erro de conexão com servidor.</h2>
+            </div>
+
+            <div className="flex align-items-center justify-content-center">
+                <img alt="logo" src={serverErrorImage} height={320} />
+            </div>
         </div>
     }
 
     return (
         <div>
+            <Toast ref={toast} />
+
             <Panel>
                 <Toolbar style={{ marginBottom: "10px" }} start={props.startContent} />
 

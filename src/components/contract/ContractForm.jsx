@@ -14,14 +14,15 @@ import ContractDatatable from "../contract/ContractDatatable";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
 import { InputTextarea } from "primereact/inputtextarea";
-import axios from "axios";
 import { AutoComplete } from "primereact/autocomplete";
+import { useCompanyFindAll } from "../../hooks/company/useCompanyFindAll";
 
 export default function ContractForm() {
     const [visibleDialog, setVisibleDialog] = useState(false);
     const toast = useRef(null);
     const { mutate: mutatePost, isSuccess } = useContractPost();
     const { mutate: mutatePut } = useContractPut();
+    const { data: companiesData, isError: isErrorFindingCompanies } = useCompanyFindAll();
     const [companiesList, setCompaniesList] = useState([]);
     const [companiesFilteredList, setcompaniesFilteredList] = useState([]);
     const newspaperParticipationTimes = ["5 MINUTOS", "10 MINUTOS"];
@@ -131,15 +132,6 @@ export default function ContractForm() {
         }
     }
 
-    const findAllCompanies = async () => {
-        try {
-            const response = await axios.get(process.env.REACT_APP_API_BASE_URL + '/companies');
-            setCompaniesList(response.data);
-        } catch (error) {
-            errorMsg(toast, 'Erro ao econtrar empresas.');
-        }
-    }
-
     const closeDialogForm = () => {
         setVisibleDialog(false);
     }
@@ -149,8 +141,16 @@ export default function ContractForm() {
     }, [isSuccess]);
 
     useEffect(() => {
-        findAllCompanies();
-    }, [companiesList.length]);
+        if (companiesData !== undefined) {
+            setCompaniesList(companiesData);
+        }
+    }, [companiesData]);
+
+    useEffect(() => {
+        if (isErrorFindingCompanies) {
+            errorMsg(toast, 'Erro ao econtrar empresas.');
+        }
+    }, [isErrorFindingCompanies]);
 
     const isFormFieldValid = (name) => !!(formik.touched[name] && formik.errors[name]);
 
@@ -159,10 +159,12 @@ export default function ContractForm() {
     };
 
     const companyCompleteMethod = (ev) => {
-        const filterSuggestions = companiesList.filter(e =>
-            e.businessName.toUpperCase().includes(ev.query.toUpperCase())
-        );
-        setcompaniesFilteredList(filterSuggestions);
+        if (companiesList !== undefined) {
+            const filterSuggestions = companiesList.filter(e =>
+                e.businessName.toUpperCase().includes(ev.query.toUpperCase())
+            );
+            setcompaniesFilteredList(filterSuggestions);
+        }
     };
 
     function findCompanyInList(name) {
@@ -249,7 +251,7 @@ export default function ContractForm() {
                                         onChange={(e) => formik.setFieldValue('clientCompany', e.value)}
                                         itemTemplate={(company) => company.businessName.toUpperCase()}
                                         selectedItemTemplate={(company) => company.businessName.toUpperCase()}
-                                        onBlur={formik.handleBlur}
+                                        onBlur={formik.handleBlur} forceSelection
                                         className={isFormFieldValid('clientCompany') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('clientCompany')}

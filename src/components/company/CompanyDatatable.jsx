@@ -2,7 +2,7 @@ import { Panel } from 'primereact/panel';
 import { Toolbar } from 'primereact/toolbar';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { IconField } from "primereact/iconfield";
@@ -13,6 +13,8 @@ import { errorMsg, warnMsg } from '../../functions/ToastMessage';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { useCompanyFindAll } from '../../hooks/company/useCompanyFindAll';
 import { buildEncodedStringAddress, formatPhoneNumberDt, formatRegistrationNumberDt } from '../../functions/StringUtils';
+import serverErrorImage from "../../assets/images/server-error.png";
+import { Toast } from 'primereact/toast';
 
 export default function CompanyDatatable(props) {
     const [company, setCompany] = useState({});
@@ -20,15 +22,22 @@ export default function CompanyDatatable(props) {
     const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useCompanyFindAll();
     const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useCompanyDelete();
     const [deleteCompanyDialog, setDeleteCompanyDialog] = useState(false);
+    const toast = useRef(null);
 
     useEffect(() => {
         hideDeleteDialog();
     }, [isSucessDeleting]);
 
+    useEffect(() => {
+        if (isErrorFindingAll) {
+            errorMsg(toast, 'Erro de conexão com servidor.');
+        }   
+    }, [isErrorFindingAll]);
+
     const deleteCompany = () => {
         mutate(company.id);
 
-        isErrorDeleting ? errorMsg(props.toast, 'Erro ao remover empresa.') : warnMsg(props.toast, 'Empresa removida com sucesso.');
+        isErrorDeleting ? errorMsg(toast, 'Erro ao remover empresa.') : warnMsg(toast, 'Empresa removida com sucesso.');
     }
 
     const confirmDeleteCompany = (company) => {
@@ -81,10 +90,6 @@ export default function CompanyDatatable(props) {
             </div>
         }
 
-        if (isErrorFindingAll) {
-            errorMsg(props.toast, 'Erro de conexão com servidor.');
-        }
-
         if (isSuccessFindingAll && Array.isArray(data)) {
             return <div className="card">
                 <DataTable value={data} tableStyle={{ minWidth: '50rem' }}
@@ -104,14 +109,23 @@ export default function CompanyDatatable(props) {
                 </DataTable>
             </div>
         }
-        return <div className='flex align-items-center justify-content-center'>
-            <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
-            <h2 className='text-red-500'>Erro de conexão com servidor.</h2>
+
+        return <div>
+            <div className='flex align-items-center justify-content-center'>
+                <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
+                <h2 className='text-red-500'>Erro de conexão com servidor.</h2>
+            </div>
+
+            <div className="flex align-items-center justify-content-center">
+                <img alt="logo" src={serverErrorImage} height={320} />
+            </div>
         </div>
     }
 
     return (
         <div>
+            <Toast ref={toast} />
+
             <Panel>
                 <Toolbar style={{ marginBottom: "10px" }} start={props.startContent} />
 
