@@ -62,7 +62,5 @@ export function dateNow() {
 }
 
 export function daysBetweenEndDate(endDate) {
-    const daysQuantity = Number(endDate.substring(8)) - Number(dateNow().substring(8));
-
-    return daysQuantity;
+    return Math.round((new Date(endDate) - new Date(dateNow())) / (1000 * 60 * 60 * 24))
 }
