@@ -98,8 +98,8 @@ export default function CompanyDatatable(props) {
                     currentPageReportTemplate="{first} de {last} de {totalRecords} empresas"
                     rows={5} emptyMessage="Nenhum empresa encontrada." key="id">
                     <Column field="id" header="Código" align="center" alignHeader="center" />
-                    <Column field="businessName" body={(rowData) => rowData.businessName.toUpperCase()} header="Nome" align="center" alignHeader="center" />
-                    <Column field="tradeName" body={(rowData) => rowData.tradeName.toUpperCase()} header="Telefone" align="center" alignHeader="center" />
+                    <Column field="businessName" body={(rowData) => rowData.businessName.toUpperCase()} header="Razão Social" align="center" alignHeader="center" />
+                    <Column field="tradeName" body={(rowData) => rowData.tradeName.toUpperCase()} header="Nome Fantasia" align="center" alignHeader="center" />
                     <Column field="registrationNumber" body={(rowData) => formatRegistrationNumberDt(rowData, 'registrationNumber')} header="CNPJ" align="center" alignHeader="center" />
                     <Column field="stateRegistration" header="Inscrição Estadual" align="center" alignHeader="center" />
                     <Column field="phoneNumber" body={(rowData) => formatPhoneNumberDt(rowData, 'phoneNumber')} header="Telefone" align="center" alignHeader="center" />
