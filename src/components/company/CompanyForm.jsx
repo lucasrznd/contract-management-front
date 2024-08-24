@@ -55,10 +55,6 @@ export default function CompanyForm(props) {
                 errors.phoneNumber = 'Telefone é obrigatório.';
             }
 
-            if (!data.email) {
-                errors.email = 'Email é obrigatório.';
-            }
-
             if (!data.streetName) {
                 errors.streetName = 'Rua é obrigatória.';
             }
@@ -329,10 +325,8 @@ export default function CompanyForm(props) {
                                         id="email"
                                         name="email"
                                         value={formik.values.email}
-                                        onChange={formik.handleChange}
-                                        className={isFormFieldValid('email') ? "p-invalid uppercase" : "lowercase"} />
+                                        onChange={formik.handleChange} />
                                 </div>
-                                {getFormErrorMessage('email')}
                             </div>
 
                             <div className="field col-12 mb-1">
