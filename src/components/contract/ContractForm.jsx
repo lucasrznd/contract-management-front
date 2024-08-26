@@ -16,6 +16,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputTextarea } from "primereact/inputtextarea";
 import { AutoComplete } from "primereact/autocomplete";
 import { useCompanyFindAll } from "../../hooks/company/useCompanyFindAll";
+import { useSellerFindAll } from "../../hooks/seller/useSellerFindAll";
 
 export default function ContractForm() {
     const [visibleDialog, setVisibleDialog] = useState(false);
@@ -25,6 +26,8 @@ export default function ContractForm() {
     const { data: companiesData, isError: isErrorFindingCompanies } = useCompanyFindAll();
     const [companiesList, setCompaniesList] = useState([]);
     const [companiesFilteredList, setcompaniesFilteredList] = useState([]);
+    const { data: sellersData } = useSellerFindAll();
+    const [sellersList, setSellersList] = useState([]);
     const newspaperParticipationTimes = ["5 MINUTOS", "10 MINUTOS"];
     const paymentMethods = ["BOLETO", "PIX"];
 
@@ -32,7 +35,7 @@ export default function ContractForm() {
         initialValues: {
             id: undefined,
             clientCompany: undefined,
-            sellerName: '',
+            seller: '',
             advertisingOrder: undefined,
             quantitySpotDay: undefined,
             spotDuration: undefined,
@@ -52,15 +55,15 @@ export default function ContractForm() {
                 errors.clientCompany = 'Empresa é obrigatória';
             }
 
-            if (!data.sellerName) {
-                errors.sellerName = 'Vendedor é obrigatório';
+            if (!data.seller) {
+                errors.seller = 'Vendedor é obrigatório';
             }
 
             if (!data.advertisingOrder) {
                 errors.advertisingOrder = 'Ordem de Propaganda é obrigatória';
             }
 
-            if (!data.quantitySpotDay) {
+            if (data.quantitySpotDay === null) {
                 errors.quantitySpotDay = 'Quantidade de Spots/Dia é obrigatório';
             }
 
@@ -80,7 +83,7 @@ export default function ContractForm() {
                 errors.monthlyPrice = 'Preço Mensal é obrigatório';
             }
 
-            if (!data.flashQuantity) {
+            if (data.flashQuantity === null) {
                 errors.flashQuantity = 'Quantidade de Flash é obrigatória';
             }
 
@@ -96,7 +99,6 @@ export default function ContractForm() {
         },
         onSubmit: async (values, actions) => {
             const data = values;
-            console.log(data)
 
             await postContract(data, actions);
         }
@@ -152,6 +154,12 @@ export default function ContractForm() {
         }
     }, [isErrorFindingCompanies]);
 
+    useEffect(() => {
+        if (sellersData !== undefined) {
+            setSellersList(sellersData);
+        }
+    }, [sellersData]);
+
     const isFormFieldValid = (name) => !!(formik.touched[name] && formik.errors[name]);
 
     const getFormErrorMessage = (name) => {
@@ -161,22 +169,27 @@ export default function ContractForm() {
     const companyCompleteMethod = (ev) => {
         if (companiesList !== undefined) {
             const filterSuggestions = companiesList.filter(e =>
-                e.businessName.toUpperCase().includes(ev.query.toUpperCase())
+                e.tradeName.toUpperCase().includes(ev.query.toUpperCase())
             );
             setcompaniesFilteredList(filterSuggestions);
         }
     };
 
     function findCompanyInList(name) {
-        const companyFound = companiesList.filter(e => e.businessName === name).at(0);
+        const companyFound = companiesList.filter(e => e.tradeName === name).at(0);
         return companyFound;
+    }
+
+    function findSellerInList(name) {
+        const sellerFound = sellersList.filter(e => e.name === name).at(0);
+        return sellerFound;
     }
 
     function newContract() {
         formik.resetForm();
         formik.setFieldValue('id', undefined);
         formik.setFieldValue('clientCompany', undefined);
-        formik.setFieldValue('sellerName', '');
+        formik.setFieldValue('seller', '');
         formik.setFieldValue('advertisingOrder', undefined);
         formik.setFieldValue('quantitySpotDay', undefined);
         formik.setFieldValue('spotDuration', undefined);
@@ -194,8 +207,8 @@ export default function ContractForm() {
     const contractDetails = (contract) => {
         formik.resetForm();
         formik.setFieldValue('id', contract.id);
-        formik.setFieldValue('clientCompany', findCompanyInList(contract.companyBusinessName));
-        formik.setFieldValue('sellerName', contract.sellerName);
+        formik.setFieldValue('clientCompany', findCompanyInList(contract.companyTradeName));
+        formik.setFieldValue('seller', findSellerInList(contract.sellerName));
         formik.setFieldValue('advertisingOrder', contract.advertisingOrder);
         formik.setFieldValue('quantitySpotDay', contract.quantitySpotDay);
         formik.setFieldValue('spotDuration', Number(contract.spotDuration).toFixed(2));
@@ -246,33 +259,33 @@ export default function ContractForm() {
                                         inputId="id"
                                         value={formik.values.clientCompany}
                                         suggestions={companiesFilteredList}
-                                        field="businessName"
+                                        field="tradeName"
                                         completeMethod={companyCompleteMethod}
                                         onChange={(e) => formik.setFieldValue('clientCompany', e.value)}
-                                        itemTemplate={(company) => company.businessName.toUpperCase()}
-                                        selectedItemTemplate={(company) => company.businessName.toUpperCase()}
-                                        onBlur={formik.handleBlur} forceSelection
+                                        itemTemplate={(company) => company.tradeName.toUpperCase()}
+                                        selectedItemTemplate={(company) => company.tradeName.toUpperCase()}
+                                        onBlur={formik.handleBlur}
                                         className={isFormFieldValid('clientCompany') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('clientCompany')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='sellerName' style={{ marginBottom: '0.5rem' }}>Vendedor</label>
+                                <label htmlFor='seller' style={{ marginBottom: '0.5rem' }}>Vendedor</label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-user"></i>
                                     </span>
                                     <Dropdown
-                                        id="sellerName"
-                                        name="sellerName"
-                                        value={formik.values.sellerName}
+                                        id="seller"
+                                        name="seller"
+                                        value={formik.values.seller}
                                         onChange={formik.handleChange}
-                                        options={["Cristiano", "Paulao"]}
-                                        showClear placeholder="SELECIONE"
-                                        className={isFormFieldValid('sellerName') ? "p-invalid uppercase" : "uppercase"} />
+                                        options={sellersList} optionLabel="name"
+                                        placeholder="SELECIONE" filter
+                                        className={isFormFieldValid('seller') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
-                                {getFormErrorMessage('sellerName')}
+                                {getFormErrorMessage('seller')}
                             </div>
 
                             <div className="field col-12 md:col-6">
@@ -288,7 +301,6 @@ export default function ContractForm() {
                                         onValueChange={formik.handleChange}
                                         useGrouping={false}
                                         mode="decimal" showButtons min={0} max={100}
-                                        placeholder="0"
                                         className={isFormFieldValid('quantitySpotDay') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('quantitySpotDay')}
@@ -359,7 +371,6 @@ export default function ContractForm() {
                                         onValueChange={formik.handleChange}
                                         useGrouping={false}
                                         mode="decimal" showButtons min={0} max={10}
-                                        placeholder="0"
                                         className={isFormFieldValid('flashQuantity') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('flashQuantity')}
