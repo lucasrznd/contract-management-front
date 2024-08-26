@@ -13,9 +13,12 @@ import { addLocale } from 'primereact/api';
 import { dateFormatDt } from '../../functions/StringUtils';
 import serverErrorImage from "../../assets/images/server-error.png";
 import { Toast } from 'primereact/toast';
+import { Avatar } from 'primereact/avatar';
+import ImageDialog from "../dialog/ImageDialog";
 
 export default function ContractDatatable(props) {
     const [contract, setContract] = useState({});
+    const [imageVisible, setImageVisible] = useState(false);
     const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useContractFindAll();
     const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useContractDelete();
     const [deleteContractDialog, setDeleteContractDialog] = useState(false);
@@ -74,6 +77,22 @@ export default function ContractDatatable(props) {
         );
     };
 
+    const sellerBodyImage = (rowData) => {
+        return <div className='flex align-items-center justify-content-center'>
+            <Avatar icon="pi pi-user" image={rowData.sellerImageUrl} onClick={(e) => openImgDialogSeller(e.target.currentSrc)} className="shadow-4" shape="circle" />
+            <p>{rowData.sellerName.toUpperCase()}</p>
+        </div>
+    };
+
+    const openImgDialogSeller = (rowData) => {
+        setContract({ ...contract, sellerImageUrl: rowData });
+        rowData !== undefined ? setImageVisible(true) : setImageVisible(false)
+    }
+
+    const closeTableImageDialog = () => {
+        setImageVisible(false);
+    }
+
     const showDatatable = () => {
         if (isLoading) {
             return <div className='flex align-items-center justify-content-center'>
@@ -89,7 +108,8 @@ export default function ContractDatatable(props) {
                     currentPageReportTemplate="{first} de {last} de {totalRecords} contratos"
                     rows={5} emptyMessage="Nenhum contrato encontrado." key="id">
                     <Column field="id" header="Código" align="center" alignHeader="center" sortable />
-                    <Column field="companyBusinessName" body={(rowData) => rowData.companyBusinessName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
+                    <Column field="companyTradeName" body={(rowData) => rowData.companyTradeName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
+                    <Column field="sellerName" body={(rowData) => sellerBodyImage(rowData)} header="Vendedor" align="center" alignHeader="center" />
                     <Column field="advertisingOrder" header="Ordem de Propaganda" align="center" alignHeader="center" />
                     <Column field="quantitySpotDay" header="Quantidade Spots/Dia" align="center" alignHeader="center" />
                     <Column field="spotDuration" body={(rowData) => Number(rowData.spotDuration).toFixed(2)} header="Tempo do Spot" align="center" alignHeader="center" />
@@ -122,6 +142,8 @@ export default function ContractDatatable(props) {
 
                 {showDatatable()}
             </Panel>
+
+            <ImageDialog visible={imageVisible} onHide={closeTableImageDialog} header="Imagem do Vendedor" src={contract.sellerImageUrl} />
 
             <DeleteDialog deleteObjectDialog={deleteContractDialog} hideDeleteDialog={hideDeleteDialog} deleteObject={deleteContract}
                 hideDeleteObjectDialog={hideDeleteDialog} object={contract} />
