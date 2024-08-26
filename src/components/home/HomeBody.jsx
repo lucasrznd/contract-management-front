@@ -124,7 +124,7 @@ export default function HomeBody() {
                                 </div>
                                 <DataTable value={expiringContracts} tableStyle={{ minWidth: '50rem' }} emptyMessage="Nenhum contrato encontrado."
                                     key="id" rows={5} paginator>
-                                    <Column field="companyBusinessName" body={(rowData) => rowData.companyBusinessName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
+                                    <Column field="companyTradeName" body={(rowData) => rowData.companyTradeName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
                                     <Column field="sellerName" body={(rowData) => sellerBodyImage(rowData)} header="Vendedor" align="center" alignHeader="center" />
                                     <Column field="advertisingOrder" header="Ordem de Propaganda" align="center" alignHeader="center" />
                                     <Column field="quantitySpotDay" header="Quantidade Spots/Dia" align="center" alignHeader="center" />
@@ -151,7 +151,7 @@ export default function HomeBody() {
                             <DataTable value={lastContracts} tableStyle={{ minWidth: '50rem' }} emptyMessage="Nenhum contrato encontrado."
                                 rows={5} key="id">
                                 <Column field="id" header="Código" align="center" alignHeader="center" />
-                                <Column field="companyBusinessName" body={(rowData) => rowData.companyBusinessName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
+                                <Column field="companyTradeName" body={(rowData) => rowData.companyTradeName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
                                 <Column field="sellerName" body={(rowData) => sellerBodyImage(rowData)} header="Vendedor" align="center" alignHeader="center" />
                                 <Column field="advertisingOrder" header="Ordem de Propaganda" align="center" alignHeader="center" />
                                 <Column field="quantitySpotDay" header="Quantidade Spots/Dia" align="center" alignHeader="center" />
