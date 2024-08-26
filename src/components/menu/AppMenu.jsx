@@ -13,6 +13,11 @@ export default function AppMenu() {
             label: 'Empresas',
             icon: 'pi pi-building',
             url: '/empresas'
+        },
+        {
+            label: 'Vendedores',
+            icon: 'pi pi-users',
+            url: '/vendedores'
         }
     ];
 
