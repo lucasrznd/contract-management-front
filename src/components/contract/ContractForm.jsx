@@ -282,6 +282,7 @@ export default function ContractForm() {
                                         value={formik.values.seller}
                                         onChange={formik.handleChange}
                                         options={sellersList} optionLabel="name"
+                                        itemTemplate={(seller) => seller.name.toUpperCase()}
                                         placeholder="SELECIONE" filter
                                         className={isFormFieldValid('seller') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
