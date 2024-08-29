@@ -20,6 +20,7 @@ import { useSellerFindAll } from "../../hooks/seller/useSellerFindAll";
 
 export default function ContractForm() {
     const [visibleDialog, setVisibleDialog] = useState(false);
+    const [searchVisible, setSearchVisible] = useState(false);
     const toast = useRef(null);
     const { mutate: mutatePost, isSuccess } = useContractPost();
     const { mutate: mutatePut } = useContractPut();
@@ -138,6 +139,14 @@ export default function ContractForm() {
         setVisibleDialog(false);
     }
 
+    function newSearch() {
+        setSearchVisible(true);
+    }
+
+    const closeSearchDialog = () => {
+        setSearchVisible(false);
+    }
+
     useEffect(() => {
         closeDialogForm();
     }, [isSuccess]);
@@ -226,6 +235,8 @@ export default function ContractForm() {
     const startContent = (
         <React.Fragment>
             <Button icon="pi pi-plus-circle" label='Novo' onClick={newContract} />
+            <span className="pi pi-ellipsis-v ml-2 mr-2" />
+            <Button icon="pi pi-search" label='Buscar' onClick={newSearch} />
         </React.Fragment>
     );
 
@@ -240,7 +251,10 @@ export default function ContractForm() {
         <div>
             <Toast ref={toast} />
 
-            <ContractDatatable startContent={startContent} contractDetails={contractDetails} toast={toast} />
+            <ContractDatatable startContent={startContent} contractDetails={contractDetails} toast={toast}
+                searchVisible={searchVisible} closeSearchDialog={closeSearchDialog}
+                companiesFilteredList={companiesFilteredList} companyCompleteMethod={companyCompleteMethod}
+                sellersList={sellersList} />
 
             <Dialog header="Detalhes do Contrato" visible={visibleDialog} style={{ width: '45vw', minWidth: "45vw" }} breakpoints={{ '1200px': '65vw', '641px': '70vw' }} onHide={() => setVisibleDialog(false)}
                 footer={modalFooter} draggable={false}>

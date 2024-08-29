@@ -15,11 +15,13 @@ import serverErrorImage from "../../assets/images/server-error.png";
 import { Toast } from 'primereact/toast';
 import { Avatar } from 'primereact/avatar';
 import ImageDialog from "../dialog/ImageDialog";
+import SearchDialog from './SearchDialog';
 
 export default function ContractDatatable(props) {
     const [contract, setContract] = useState({});
     const [imageVisible, setImageVisible] = useState(false);
     const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useContractFindAll();
+    const [contractList, setContractList] = useState([]);
     const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useContractDelete();
     const [deleteContractDialog, setDeleteContractDialog] = useState(false);
     const toast = useRef(null);
@@ -39,6 +41,10 @@ export default function ContractDatatable(props) {
     const hideDeleteDialog = () => {
         setDeleteContractDialog(false);
     }
+
+    useEffect(() => {
+        setContractList(data);
+    }, [data]);
 
     useEffect(() => {
         hideDeleteDialog();
@@ -100,9 +106,9 @@ export default function ContractDatatable(props) {
             </div>
         }
 
-        if (isSuccessFindingAll && Array.isArray(data)) {
+        if (isSuccessFindingAll && Array.isArray(contractList)) {
             return <div className="card">
-                <DataTable value={data} tableStyle={{ minWidth: '50rem' }}
+                <DataTable value={contractList} tableStyle={{ minWidth: '50rem' }}
                     paginator header={tableHeader}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate="{first} de {last} de {totalRecords} contratos"
@@ -144,6 +150,10 @@ export default function ContractDatatable(props) {
             </Panel>
 
             <ImageDialog visible={imageVisible} onHide={closeTableImageDialog} header="Imagem do Vendedor" src={contract.sellerImageUrl} />
+
+            <SearchDialog searchVisible={props.searchVisible} closeSearchDialog={props.closeSearchDialog}
+                companiesFilteredList={props.companiesFilteredList} companyCompleteMethod={props.companyCompleteMethod}
+                sellersList={props.sellersList} setContractList={setContractList} />
 
             <DeleteDialog deleteObjectDialog={deleteContractDialog} hideDeleteDialog={hideDeleteDialog} deleteObject={deleteContract}
                 hideDeleteObjectDialog={hideDeleteDialog} object={contract} />
