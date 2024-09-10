@@ -162,6 +162,7 @@ export default function SearchDialog(props) {
                                     options={props.sellersList} optionLabel="name"
                                     itemTemplate={(seller) => seller.name.toUpperCase()}
                                     placeholder="SELECIONE" filter
+                                    emptyMessage="Nenhum vendedor encontrado"
                                     className={isFormFieldValid('seller') ? "p-invalid uppercase" : "uppercase"} />
                             </div>
                             {getFormErrorMessage('seller')}
