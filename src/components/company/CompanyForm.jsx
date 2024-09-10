@@ -270,7 +270,7 @@ export default function CompanyForm(props) {
                                         name="registrationNumber"
                                         value={formik.values.registrationNumber}
                                         onChange={formik.handleChange}
-                                        mask="99.999.999/0001-99"
+                                        mask="99.999.999/9999-99"
                                         placeholder="99.999.999/0001-99"
                                         className={isFormFieldValid('registrationNumber') ? "p-invalid uppercase" : "uppercase"}
                                     />
