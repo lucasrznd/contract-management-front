@@ -115,7 +115,7 @@ export default function ContractForm() {
                     onSuccess: () => {
                         closeDialogForm();
                         actions.resetForm();
-                        successMsg(toast, 'Empresa salva com sucesso.');
+                        successMsg(toast, 'Contrato salvo com sucesso.');
                     },
                 });
             } else {
