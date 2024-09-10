@@ -85,7 +85,7 @@ export default function ContractDatatable(props) {
 
     const sellerBodyImage = (rowData) => {
         return <div className='flex align-items-center justify-content-center'>
-            <Avatar icon="pi pi-user" image={rowData.sellerImageUrl} onClick={(e) => openImgDialogSeller(e.target.currentSrc)} className="shadow-4" shape="circle" />
+            <Avatar icon="pi pi-user" image={rowData.sellerImageUrl} onClick={(e) => openImgDialogSeller(e.target.currentSrc)} className="mr-2 shadow-4" shape="circle" />
             <p>{rowData.sellerName.toUpperCase()}</p>
         </div>
     };
