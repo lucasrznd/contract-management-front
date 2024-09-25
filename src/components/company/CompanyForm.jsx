@@ -26,6 +26,7 @@ export default function CompanyForm(props) {
             businessName: '',
             tradeName: '',
             registrationNumber: undefined,
+            cpf: undefined,
             stateRegistration: undefined,
             phoneNumber: undefined,
             email: '',
@@ -84,6 +85,7 @@ export default function CompanyForm(props) {
         onSubmit: async (values, actions) => {
             const data = values;
             data.registrationNumber = clearRegistrationNumber(data.registrationNumber);
+            data.cpf !== undefined ? data.cpf = clearRegistrationNumber(data.cpf) : data.cpf = undefined;
             data.phoneNumber = clearPhoneNumber(data.phoneNumber);
 
             await postCompany(data, actions);
@@ -163,6 +165,7 @@ export default function CompanyForm(props) {
         formik.setFieldValue('businessName', '');
         formik.setFieldValue('tradeName', '');
         formik.setFieldValue('registrationNumber', undefined);
+        formik.setFieldValue('cpf', undefined);
         formik.setFieldValue('stateRegistration', '');
         formik.setFieldValue('phoneNumber', undefined);
         formik.setFieldValue('email', '');
@@ -185,6 +188,7 @@ export default function CompanyForm(props) {
         formik.setFieldValue('businessName', company.businessName);
         formik.setFieldValue('tradeName', company.tradeName);
         formik.setFieldValue('registrationNumber', company.registrationNumber);
+        formik.setFieldValue('cpf', company.cpf === null || company.cpf === '' ? undefined : company.cpf);
         formik.setFieldValue('stateRegistration', company.stateRegistration === null ? undefined : company.stateRegistration);
         formik.setFieldValue('phoneNumber', company.phoneNumber);
         formik.setFieldValue('email', company.email);
@@ -279,6 +283,27 @@ export default function CompanyForm(props) {
                             </div>
 
                             <div className="field col-12 md:col-6">
+                                <label htmlFor='cpf' style={{ marginBottom: '0.5rem' }}>CPF:</label>
+                                <div className="p-inputgroup flex-1">
+                                    <span className="p-inputgroup-addon">
+                                        <i className="pi pi-user"></i>
+                                    </span>
+                                    <InputMask
+                                        id="cpf"
+                                        name="cpf"
+                                        value={formik.values.cpf}
+                                        onChange={formik.handleChange}
+                                        mask="999.999.999-99"
+                                        placeholder="999.999.999-99"
+                                        className={isFormFieldValid('cpf') ? "p-invalid uppercase" : "uppercase"}
+                                    />
+                                </div>
+                                {getFormErrorMessage('cpf')}
+                            </div>
+                        </div>
+
+                        <div className="p-fluid formgrid grid">
+                            <div className="field col-12 md:col-6">
                                 <label htmlFor='stateRegistration' style={{ marginBottom: '0.5rem' }}>Inscrição Estadual:</label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
@@ -292,9 +317,7 @@ export default function CompanyForm(props) {
                                         maxLength={15} />
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="p-fluid formgrid grid">
                             <div className="field col-12 md:col-6">
                                 <label htmlFor='phoneNumber' style={{ marginBottom: '0.5rem' }}>Telefone:</label>
                                 <div className="p-inputgroup flex-1">
