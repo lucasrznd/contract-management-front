@@ -13,6 +13,7 @@ import serverErrorImage from "../../assets/images/server-error.png";
 import { Tag } from "primereact/tag";
 import { Avatar } from "primereact/avatar";
 import ImageDialog from "../dialog/ImageDialog";
+import { useTotalEstimatedRevenue } from "../../hooks/contract/useTotalEstimatedRevenue";
 
 export default function HomeBody() {
     const toast = useRef(null);
@@ -21,6 +22,7 @@ export default function HomeBody() {
     const { data: expiringContracts, isLoading: isLoadingExpiringContracts, isSuccess: isSucessFindExpiringContracts, isError: isErrorExpiringContracts } = useContractExpiring();
     const { data: lastContracts } = useContractLastFive();
     const { data: contractsCounter } = useContractCount();
+    const { data: totalEstimatedRevenue } = useTotalEstimatedRevenue();
     const { data: companiesCounter } = useCompanyCount();
 
     useEffect(() => {
@@ -108,6 +110,22 @@ export default function HomeBody() {
                             <div className="flex md:align-items-center align-items-stretch flex-wrap">
                                 <span className="text-green-500 text-900 font-medium text-xl flex align-items-center justify-content-center">{companiesCounter}</span>
                                 <span className="text-500 flex align-items-center justify-content-center ml-2">registradas.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-12 md:col-6 lg:col-3">
+                        <div className="surface-0 shadow-2 p-3 border-1 border-50 border-round">
+                            <div className="flex justify-content-between mb-3">
+                                <div>
+                                    <span className="block text-500 font-medium mb-3 font-bold">Receita Total Estimada</span>
+                                </div>
+                                <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                                    <i className="pi pi-dollar text-green-700 text-xl"></i>
+                                </div>
+                            </div>
+                            <div className="flex md:align-items-center align-items-stretch flex-wrap">
+                                <span className="text-600 font-bold text-xl flex align-items-center justify-content-center">{totalEstimatedRevenue}</span>
                             </div>
                         </div>
                     </div>
