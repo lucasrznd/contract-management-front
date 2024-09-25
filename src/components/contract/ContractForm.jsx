@@ -29,7 +29,7 @@ export default function ContractForm() {
     const [companiesFilteredList, setcompaniesFilteredList] = useState([]);
     const { data: sellersData } = useSellerFindAll();
     const [sellersList, setSellersList] = useState([]);
-    const newspaperParticipationTimes = ["5 MINUTOS", "10 MINUTOS"];
+    const newspaperParticipationTimes = ["5 MINUTOS", "10 MINUTOS", "15 MINUTOS"];
     const paymentMethods = ["BOLETO", "PIX"];
 
     const formik = useFormik({
@@ -40,6 +40,8 @@ export default function ContractForm() {
             advertisingOrder: undefined,
             quantitySpotDay: undefined,
             spotDuration: undefined,
+            testimonialDuration: undefined,
+            testimonialQuantity: undefined,
             startDate: undefined,
             endDate: undefined,
             monthlyPrice: undefined,
@@ -70,6 +72,14 @@ export default function ContractForm() {
 
             if (!data.spotDuration) {
                 errors.spotDuration = 'Tempo do Spot é obrigatório';
+            }
+
+            if (data.testimonialQuantity === null) {
+                errors.testimonialQuantity = 'Quantidade de Testemunhais é obrigatório';
+            }
+
+            if (!data.testimonialDuration) {
+                errors.testimonialDuration = 'Tempo do Testemunhal é obrigatório';
             }
 
             if (!data.startDate) {
@@ -202,6 +212,8 @@ export default function ContractForm() {
         formik.setFieldValue('advertisingOrder', undefined);
         formik.setFieldValue('quantitySpotDay', undefined);
         formik.setFieldValue('spotDuration', undefined);
+        formik.setFieldValue('testimonialQuantity', undefined);
+        formik.setFieldValue('testimonialDuration', undefined);
         formik.setFieldValue('startDate', undefined);
         formik.setFieldValue('endDate', undefined);
         formik.setFieldValue('monthlyPrice', undefined);
@@ -221,6 +233,8 @@ export default function ContractForm() {
         formik.setFieldValue('advertisingOrder', contract.advertisingOrder);
         formik.setFieldValue('quantitySpotDay', contract.quantitySpotDay);
         formik.setFieldValue('spotDuration', Number(contract.spotDuration).toFixed(2));
+        formik.setFieldValue('testimonialQuantity', contract.testimonialQuantity);
+        formik.setFieldValue('testimonialDuration', Number(contract.testimonialDuration).toFixed(2));
         formik.setFieldValue('startDate', parseDate(contract.startDate));
         formik.setFieldValue('endDate', parseDate(contract.endDate));
         formik.setFieldValue('monthlyPrice', parseFloat(contract.monthlyPriceFmt.substring(3)));
@@ -338,6 +352,42 @@ export default function ContractForm() {
                                         className={isFormFieldValid('spotDuration') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('spotDuration')}
+                            </div>
+
+                            <div className="field col-12 md:col-6">
+                                <label htmlFor='testimonialQuantity' style={{ marginBottom: '0.5rem' }}>Quantidade Testemunhal:</label>
+                                <div className="p-inputgroup flex-1">
+                                    <span className="p-inputgroup-addon">
+                                        <i className="pi pi-chevron-up"></i>
+                                    </span>
+                                    <InputNumber
+                                        id="testimonialQuantity"
+                                        name="testimonialQuantity"
+                                        value={formik.values.testimonialQuantity}
+                                        onValueChange={formik.handleChange}
+                                        useGrouping={false}
+                                        mode="decimal" showButtons min={0} max={100}
+                                        className={isFormFieldValid('testimonialQuantity') ? "p-invalid uppercase" : "uppercase"} />
+                                </div>
+                                {getFormErrorMessage('testimonialQuantity')}
+                            </div>
+
+                            <div className="field col-12 md:col-6">
+                                <label htmlFor='testimonialDuration' style={{ marginBottom: '0.5rem' }}>Tempo do Testemunhal:</label>
+                                <div className="p-inputgroup flex-1">
+                                    <span className="p-inputgroup-addon">
+                                        <i className="pi pi-stopwatch"></i>
+                                    </span>
+                                    <InputMask
+                                        id="testimonialDuration"
+                                        name="testimonialDuration"
+                                        value={formik.values.testimonialDuration}
+                                        onChange={formik.handleChange}
+                                        mask="9.99"
+                                        placeholder="0.30"
+                                        className={isFormFieldValid('testimonialDuration') ? "p-invalid uppercase" : "uppercase"} />
+                                </div>
+                                {getFormErrorMessage('testimonialDuration')}
                             </div>
 
                             <div className="field col-12 md:col-6">
