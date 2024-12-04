@@ -64,3 +64,8 @@ export function dateNow() {
 export function daysBetweenEndDate(endDate) {
     return Math.round((new Date(endDate) - new Date(dateNow())) / (1000 * 60 * 60 * 24))
 }
+
+export function isValidDate(dateString) {
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date);
+};

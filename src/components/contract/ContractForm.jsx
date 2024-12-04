@@ -17,10 +17,13 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { AutoComplete } from "primereact/autocomplete";
 import { useCompanyFindAll } from "../../hooks/company/useCompanyFindAll";
 import { useSellerFindAll } from "../../hooks/seller/useSellerFindAll";
+import { InputText } from "primereact/inputtext";
 
 export default function ContractForm() {
     const [visibleDialog, setVisibleDialog] = useState(false);
     const [searchVisible, setSearchVisible] = useState(false);
+    const [generateContractVisible, setGenerateContractVisible] = useState(false);
+    const [digitalDocVisible, setDigitalDocVisible] = useState(false);
     const toast = useRef(null);
     const { mutate: mutatePost, isSuccess } = useContractPost();
     const { mutate: mutatePut } = useContractPut();
@@ -157,6 +160,22 @@ export default function ContractForm() {
         setSearchVisible(false);
     }
 
+    const openGenerateContractDialog = () => {
+        setGenerateContractVisible(true);
+    }
+
+    const closeGenerateContractDialog = () => {
+        setGenerateContractVisible(false);
+    }
+
+    const openDigitalDocDialog = () => {
+        setDigitalDocVisible(true);
+    }
+
+    const closeDigitalDocDialog = () => {
+        setDigitalDocVisible(false);
+    }
+
     useEffect(() => {
         closeDialogForm();
     }, [isSuccess]);
@@ -267,6 +286,9 @@ export default function ContractForm() {
 
             <ContractDatatable startContent={startContent} contractDetails={contractDetails} toast={toast}
                 searchVisible={searchVisible} closeSearchDialog={closeSearchDialog}
+                generateContractVisible={generateContractVisible} closeGenerateContractDialog={closeGenerateContractDialog}
+                openGenerateContractDialog={openGenerateContractDialog}
+                digitalDocVisible={digitalDocVisible} openDigitalDocDialog={openDigitalDocDialog} closeDigitalDocDialog={closeDigitalDocDialog}
                 companiesFilteredList={companiesFilteredList} companyCompleteMethod={companyCompleteMethod}
                 sellersList={sellersList} />
 
@@ -521,12 +543,11 @@ export default function ContractForm() {
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-flag"></i>
                                     </span>
-                                    <InputNumber
+                                    <InputText
                                         id="advertisingOrder"
                                         name="advertisingOrder"
                                         value={formik.values.advertisingOrder}
-                                        onValueChange={formik.handleChange}
-                                        useGrouping={false}
+                                        onChange={formik.handleChange}
                                         className={isFormFieldValid('advertisingOrder') ? "p-invalid uppercase" : "uppercase"} />
                                 </div>
                                 {getFormErrorMessage('advertisingOrder')}

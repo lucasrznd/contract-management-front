@@ -16,14 +16,22 @@ import { Toast } from 'primereact/toast';
 import { Avatar } from 'primereact/avatar';
 import ImageDialog from "../dialog/ImageDialog";
 import SearchDialog from './SearchDialog';
+import GenerateContract from './GenerateContract';
+import DigitalContract from './DigitalContract';
+import { IconField } from 'primereact/iconfield';
+import { InputIcon } from 'primereact/inputicon';
+import { InputText } from 'primereact/inputtext';
 
 export default function ContractDatatable(props) {
     const [contract, setContract] = useState({});
+    const [pdfData, setPdfData] = useState({});
+    const [digitalContract, setDigitalContract] = useState({});
     const [imageVisible, setImageVisible] = useState(false);
     const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useContractFindAll();
     const [contractList, setContractList] = useState([]);
     const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useContractDelete();
     const [deleteContractDialog, setDeleteContractDialog] = useState(false);
+    const [globalFilter, setGlobalFilter] = useState(null);
     const toast = useRef(null);
 
     addLocale('pt-BR', {
@@ -68,8 +76,12 @@ export default function ContractDatatable(props) {
     }
 
     const tableHeader = (
-        <div>
+        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
             <h4 className="m-0">Contratos</h4>
+            <IconField iconPosition="left">
+                <InputIcon className="pi pi-search"> </InputIcon>
+                <InputText type="search" onInput={(e) => setGlobalFilter(e.target.value)} placeholder="Buscar..." />
+            </IconField>
         </div>
     );
 
@@ -82,6 +94,26 @@ export default function ContractDatatable(props) {
             </React.Fragment>
         );
     };
+
+    const openGenerateContractDialog = (rowData) => {
+        setPdfData({ ...rowData });
+        props.openGenerateContractDialog();
+    }
+
+    const generateContract = (rowData) => {
+        if (rowData.token !== null) {
+            return <Button icon="pi pi-file-word" rounded text raised severity="warning"
+                onClick={() => openDigitalDoc(rowData)} />
+        }
+
+        return <Button icon="pi pi-file-plus" rounded text raised severity="info"
+            onClick={() => openGenerateContractDialog(rowData)} />
+    }
+
+    const openDigitalDoc = async (rowData) => {
+        setDigitalContract({ ...rowData });
+        props.openDigitalDocDialog();
+    }
 
     const sellerBodyImage = (rowData) => {
         return <div className='flex align-items-center justify-content-center'>
@@ -109,7 +141,7 @@ export default function ContractDatatable(props) {
         if (isSuccessFindingAll && Array.isArray(contractList)) {
             return <div className="card">
                 <DataTable value={contractList} tableStyle={{ minWidth: '50rem' }}
-                    paginator header={tableHeader}
+                    paginator header={tableHeader} globalFilter={globalFilter}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                     currentPageReportTemplate="{first} de {last} de {totalRecords} contratos"
                     rows={5} emptyMessage="Nenhum contrato encontrado." key="id">
@@ -117,11 +149,12 @@ export default function ContractDatatable(props) {
                     <Column field="companyTradeName" body={(rowData) => rowData.companyTradeName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
                     <Column field="sellerName" body={(rowData) => sellerBodyImage(rowData)} header="Vendedor" align="center" alignHeader="center" />
                     <Column field="advertisingOrder" header="Ordem de Propaganda" align="center" alignHeader="center" />
-                    <Column field="quantitySpotDay" header="Quantidade Spots/Dia" align="center" alignHeader="center" />
-                    <Column field="spotDuration" body={(rowData) => Number(rowData.spotDuration).toFixed(2)} header="Tempo do Spot" align="center" alignHeader="center" />
+                    {/* <Column field="quantitySpotDay" header="Quantidade Spots/Dia" align="center" alignHeader="center" /> */}
+                    {/* <Column field="spotDuration" body={(rowData) => Number(rowData.spotDuration).toFixed(2)} header="Tempo do Spot" align="center" alignHeader="center" /> */}
                     <Column field="startDate" body={(rowData) => dateFormatDt(rowData, 'startDate')} header="Data de Início" align="center" alignHeader="center" />
                     <Column field="endDate" body={(rowData) => dateFormatDt(rowData, 'endDate')} header="Data de Término" align="center" alignHeader="center" />
                     <Column field="monthlyPriceFmt" header="Preço Mensal" className="font-bold" align="center" alignHeader="center" />
+                    <Column header="Gerar Contrato" body={generateContract} align="center" alignHeader="center" />
                     <Column body={tableActions} exportable={false} style={{ minWidth: '12rem' }} align="center" header="Ações" alignHeader="center"></Column>
                 </DataTable>
             </div>
@@ -151,9 +184,18 @@ export default function ContractDatatable(props) {
 
             <ImageDialog visible={imageVisible} onHide={closeTableImageDialog} header="Imagem do Vendedor" src={contract.sellerImageUrl} />
 
+            <GenerateContract generateContractVisible={props.generateContractVisible}
+                closeGenerateContractDialog={props.closeGenerateContractDialog}
+                data={pdfData} />
+
+            <DigitalContract data={digitalContract}
+                digitalDocVisible={props.digitalDocVisible}
+                openDigitalDocDialog={props.openDigitalDocDialog}
+                closeDigitalDocDialog={props.closeDigitalDocDialog} />
+
             <SearchDialog searchVisible={props.searchVisible} closeSearchDialog={props.closeSearchDialog}
                 companiesFilteredList={props.companiesFilteredList} companyCompleteMethod={props.companyCompleteMethod}
-                sellersList={props.sellersList} setContractList={setContractList} />
+                sellersList={props.sellersList} contractList={contractList} setContractList={setContractList} />
 
             <DeleteDialog deleteObjectDialog={deleteContractDialog} hideDeleteDialog={hideDeleteDialog} deleteObject={deleteContract}
                 hideDeleteObjectDialog={hideDeleteDialog} object={contract} />
