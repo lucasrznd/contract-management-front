@@ -69,3 +69,12 @@ export function isValidDate(dateString) {
     const date = new Date(dateString);
     return date instanceof Date && !isNaN(date);
 };
+
+export function replacePdfPath(pdfPath) {
+    if (pdfPath !== null) {
+        const pdfUrl = pdfPath.replace(/\\\\/g, "http://").replace(/\\/g, "/");
+        return pdfUrl;
+    }
+
+    return null;
+}

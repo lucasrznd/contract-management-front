@@ -10,7 +10,7 @@ import { useContractFindAll } from "../../hooks/contract/useContractFindAll";
 import { useContractDelete } from "../../hooks/contract/useContractDelete";
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { addLocale } from 'primereact/api';
-import { dateFormatDt } from '../../functions/StringUtils';
+import { dateFormatDt, replacePdfPath } from '../../functions/StringUtils';
 import serverErrorImage from "../../assets/images/server-error.png";
 import { Toast } from 'primereact/toast';
 import { Avatar } from 'primereact/avatar';
@@ -21,6 +21,7 @@ import DigitalContract from './DigitalContract';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { InputText } from 'primereact/inputtext';
+import ContractPDFViewer from './ContractPDFViewer';
 
 export default function ContractDatatable(props) {
     const [contract, setContract] = useState({});
@@ -33,6 +34,8 @@ export default function ContractDatatable(props) {
     const [deleteContractDialog, setDeleteContractDialog] = useState(false);
     const [globalFilter, setGlobalFilter] = useState(null);
     const toast = useRef(null);
+    const [pdfViewerVisible, setPdfViewerVisible] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState('');
 
     addLocale('pt-BR', {
         firstDayOfWeek: 0,
@@ -101,6 +104,10 @@ export default function ContractDatatable(props) {
     }
 
     const generateContract = (rowData) => {
+        if (rowData.pdfPath !== null) {
+            return <Button icon="pi pi-file-pdf" rounded severity="warning" onClick={() => openPdfViewer(rowData)} />
+        }
+
         if (rowData.token !== null) {
             return <Button icon="pi pi-file-word" rounded text raised severity="warning"
                 onClick={() => openDigitalDoc(rowData)} />
@@ -108,6 +115,11 @@ export default function ContractDatatable(props) {
 
         return <Button icon="pi pi-file-plus" rounded text raised severity="info"
             onClick={() => openGenerateContractDialog(rowData)} />
+    }
+
+    const openPdfViewer = (rowData) => {
+        setPdfUrl(replacePdfPath(rowData.pdfPath));
+        setPdfViewerVisible(true);
     }
 
     const openDigitalDoc = async (rowData) => {
@@ -129,6 +141,10 @@ export default function ContractDatatable(props) {
 
     const closeTableImageDialog = () => {
         setImageVisible(false);
+    }
+
+    const closePdfViewerDialog = () => {
+        setPdfViewerVisible(false);
     }
 
     const showDatatable = () => {
@@ -192,6 +208,8 @@ export default function ContractDatatable(props) {
                 digitalDocVisible={props.digitalDocVisible}
                 openDigitalDocDialog={props.openDigitalDocDialog}
                 closeDigitalDocDialog={props.closeDigitalDocDialog} />
+
+            <ContractPDFViewer src={pdfUrl} pdfViewerVisible={pdfViewerVisible} closePdfViewerDialog={closePdfViewerDialog} />
 
             <SearchDialog searchVisible={props.searchVisible} closeSearchDialog={props.closeSearchDialog}
                 companiesFilteredList={props.companiesFilteredList} companyCompleteMethod={props.companyCompleteMethod}
