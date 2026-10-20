@@ -1,6 +1,6 @@
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import React from "react";
+import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
+import React from 'react';
 
 interface DeleteDialogProps {
     deleteObjectDialog: boolean;
@@ -20,16 +20,20 @@ export default function DeleteDialog(props: DeleteDialogProps) {
 
     return (
         <div>
-            <Dialog visible={props.deleteObjectDialog} style={{ width: '32rem' }} breakpoints={{ '960px': '75vw', '641px': '90vw' }} header="Confirmação" modal footer={deleteObjectFooter} onHide={props.hideDeleteObjectDialog}>
-                <div className="confirmation-content" style={{ display: "flex", alignItems: "center" }}>
+            <Dialog
+                visible={props.deleteObjectDialog}
+                style={{ width: '32rem' }}
+                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+                header="Confirmação"
+                modal
+                footer={deleteObjectFooter}
+                onHide={props.hideDeleteObjectDialog}
+            >
+                <div className="confirmation-content" style={{ display: 'flex', alignItems: 'center' }}>
                     <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {props.object && (
-                        <span>
-                            Deseja realmente excluir o registro?
-                        </span>
-                    )}
+                    {props.object && <span>Deseja realmente excluir o registro?</span>}
                 </div>
             </Dialog>
         </div>
-    )
+    );
 }

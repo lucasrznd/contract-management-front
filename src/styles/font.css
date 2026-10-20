@@ -4,7 +4,7 @@
  */
 
 :root {
-  --font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-  /* Lara enables Inter-only character variants; they don't apply to Geist. */
-  --font-feature-settings: normal;
+    --font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    /* Lara enables Inter-only character variants; they don't apply to Geist. */
+    --font-feature-settings: normal;
 }

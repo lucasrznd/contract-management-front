@@ -1,31 +1,42 @@
-import { MegaMenu } from "primereact/megamenu";
-import type { MenuItem } from "primereact/menuitem";
-import logo from "../../assets/images/logo-horizontal.png";
+import { MegaMenu } from 'primereact/megamenu';
+import type { MenuItem } from 'primereact/menuitem';
+import logo from '../../assets/images/logo-horizontal.png';
 
 export default function AppMenu() {
     const items: MenuItem[] = [
         {
             label: 'Contratos',
             icon: 'pi pi-folder-open',
-            url: '/contratos'
+            url: '/contratos',
         },
         {
             label: 'Empresas',
             icon: 'pi pi-building',
-            url: '/empresas'
+            url: '/empresas',
         },
         {
             label: 'Vendedores',
             icon: 'pi pi-users',
-            url: '/vendedores'
-        }
+            url: '/vendedores',
+        },
     ];
 
-    const start = <a href="/"><img alt="logo" src={logo} height={60} className="mr-2" /></a>
+    const start = (
+        <a href="/">
+            <img alt="logo" src={logo} height={60} className="mr-2" />
+        </a>
+    );
 
     return (
         <div className="card">
-            <MegaMenu model={items} orientation="horizontal" start={start} breakpoint="600px" className="p-3 surface-0 shadow-2 mb-2" style={{ borderRadius: '1rem' }} />
+            <MegaMenu
+                model={items}
+                orientation="horizontal"
+                start={start}
+                breakpoint="600px"
+                className="p-3 surface-0 shadow-2 mb-2"
+                style={{ borderRadius: '1rem' }}
+            />
         </div>
-    )
+    );
 }

@@ -1,4 +1,4 @@
-import type { Company } from "../types";
+import type { Company } from '../types';
 
 export function clearPhoneNumber(number: string) {
     const formattedNumber = number.replace(/\D/g, '');
@@ -27,18 +27,22 @@ export function formatPhoneNumberDt<K extends string>(rowData: Record<K, string>
 }
 
 export function formatRegistrationNumberDt<K extends string>(rowData: Record<K, string>, columnName: K) {
-    const registrationNumberFmt = rowData[columnName].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    const registrationNumberFmt = rowData[columnName].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     return registrationNumberFmt;
 }
 
 export function buildEncodedStringAddress(rowData: Pick<Company, 'streetName' | 'number' | 'avenueName' | 'zipCode'>) {
-    const addressString = rowData.streetName + ', ' + rowData.number + ', ' + rowData.avenueName + ', ' + rowData.zipCode;
+    const addressString =
+        rowData.streetName + ', ' + rowData.number + ', ' + rowData.avenueName + ', ' + rowData.zipCode;
     const encodedAddress = encodeURI(addressString);
 
     return encodedAddress;
 }
 
-export function dateFormatDt<K extends string>(rowData: Record<K, string | null | undefined> | null | undefined, columnName: K) {
+export function dateFormatDt<K extends string>(
+    rowData: Record<K, string | null | undefined> | null | undefined,
+    columnName: K,
+) {
     if (rowData && rowData[columnName]) {
         const [year, month, day] = rowData[columnName].split('-').map(Number);
         const data = new Date(year, month - 1, day);
@@ -63,17 +67,17 @@ export function dateNow() {
 }
 
 export function daysBetweenEndDate(endDate: string) {
-    return Math.round((new Date(endDate).getTime() - new Date(dateNow()).getTime()) / (1000 * 60 * 60 * 24))
+    return Math.round((new Date(endDate).getTime() - new Date(dateNow()).getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function isValidDate(dateString: string | Date) {
     const date = new Date(dateString);
     return date instanceof Date && !isNaN(date.getTime());
-};
+}
 
 export function replacePdfPath(pdfPath: string | null) {
     if (pdfPath !== null) {
-        const pdfUrl = pdfPath.replace(/\\\\/g, "http://").replace(/\\/g, "/");
+        const pdfUrl = pdfPath.replace(/\\\\/g, 'http://').replace(/\\/g, '/');
         return pdfUrl;
     }
 

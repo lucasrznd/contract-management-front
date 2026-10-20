@@ -1,24 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Dialog } from "primereact/dialog";
-import { InputMask } from "primereact/inputmask";
-import { Button } from "primereact/button";
-import { Toast } from "primereact/toast";
-import { errorMsg, successMsg } from "../../functions/ToastMessage";
-import { InputNumber } from "primereact/inputnumber";
-import { parseDate } from "../../functions/StringUtils";
-import { errorMessageFormatter } from "../../functions/MessageFormatter";
+import React, { useEffect, useRef, useState } from 'react';
+import { Dialog } from 'primereact/dialog';
+import { InputMask } from 'primereact/inputmask';
+import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
+import { errorMsg, successMsg } from '../../functions/ToastMessage';
+import { InputNumber } from 'primereact/inputnumber';
+import { parseDate } from '../../functions/StringUtils';
+import { errorMessageFormatter } from '../../functions/MessageFormatter';
 import { useFormik, type FormikErrors, type FormikHelpers } from 'formik';
-import { useContractPost } from "../../hooks/contract/useContractPost";
-import { useContractPut } from "../../hooks/contract/useContractPut";
-import ContractDatatable from "../contract/ContractDatatable";
-import { Calendar } from "primereact/calendar";
-import { Dropdown } from "primereact/dropdown";
-import { InputTextarea } from "primereact/inputtextarea";
-import { AutoComplete, type AutoCompleteCompleteEvent } from "primereact/autocomplete";
-import { useCompanyFindAll } from "../../hooks/company/useCompanyFindAll";
-import { useSellerFindAll } from "../../hooks/seller/useSellerFindAll";
-import { InputText } from "primereact/inputtext";
-import type { Company, Contract, ContractFormValues, Seller } from "../../types";
+import { useContractPost } from '../../hooks/contract/useContractPost';
+import { useContractPut } from '../../hooks/contract/useContractPut';
+import ContractDatatable from '../contract/ContractDatatable';
+import { Calendar } from 'primereact/calendar';
+import { Dropdown } from 'primereact/dropdown';
+import { InputTextarea } from 'primereact/inputtextarea';
+import { AutoComplete, type AutoCompleteCompleteEvent } from 'primereact/autocomplete';
+import { useCompanyFindAll } from '../../hooks/company/useCompanyFindAll';
+import { useSellerFindAll } from '../../hooks/seller/useSellerFindAll';
+import { InputText } from 'primereact/inputtext';
+import type { Company, Contract, ContractFormValues, Seller } from '../../types';
 
 export default function ContractForm() {
     const [visibleDialog, setVisibleDialog] = useState(false);
@@ -33,8 +33,8 @@ export default function ContractForm() {
     const [companiesFilteredList, setcompaniesFilteredList] = useState<Company[]>([]);
     const { data: sellersData } = useSellerFindAll();
     const [sellersList, setSellersList] = useState<Seller[]>([]);
-    const newspaperParticipationTimes = ["5 MINUTOS", "10 MINUTOS", "15 MINUTOS"];
-    const paymentMethods = ["BOLETO", "PIX"];
+    const newspaperParticipationTimes = ['5 MINUTOS', '10 MINUTOS', '15 MINUTOS'];
+    const paymentMethods = ['BOLETO', 'PIX'];
 
     const formik = useFormik<ContractFormValues>({
         initialValues: {
@@ -53,7 +53,7 @@ export default function ContractForm() {
             newspaperParticipation: '',
             paymentMethod: '',
             paymentDueDay: undefined,
-            observation: ''
+            observation: '',
         },
         validate: (data) => {
             let errors: FormikErrors<ContractFormValues> = {};
@@ -116,7 +116,7 @@ export default function ContractForm() {
             const data = values;
 
             await postContract(data, actions);
-        }
+        },
     });
 
     async function postContract(data: ContractFormValues, actions: FormikHelpers<ContractFormValues>) {
@@ -151,7 +151,7 @@ export default function ContractForm() {
 
     const closeDialogForm = () => {
         setVisibleDialog(false);
-    }
+    };
 
     function newSearch() {
         setSearchVisible(true);
@@ -159,23 +159,23 @@ export default function ContractForm() {
 
     const closeSearchDialog = () => {
         setSearchVisible(false);
-    }
+    };
 
     const openGenerateContractDialog = () => {
         setGenerateContractVisible(true);
-    }
+    };
 
     const closeGenerateContractDialog = () => {
         setGenerateContractVisible(false);
-    }
+    };
 
     const openDigitalDocDialog = () => {
         setDigitalDocVisible(true);
-    }
+    };
 
     const closeDigitalDocDialog = () => {
         setDigitalDocVisible(false);
-    }
+    };
 
     useEffect(() => {
         closeDialogForm();
@@ -207,20 +207,20 @@ export default function ContractForm() {
 
     const companyCompleteMethod = (ev: AutoCompleteCompleteEvent) => {
         if (companiesList !== undefined) {
-            const filterSuggestions = companiesList.filter(e =>
-                e.tradeName.toUpperCase().includes(ev.query.toUpperCase())
+            const filterSuggestions = companiesList.filter((e) =>
+                e.tradeName.toUpperCase().includes(ev.query.toUpperCase()),
             );
             setcompaniesFilteredList(filterSuggestions);
         }
     };
 
     function findCompanyInList(name: string) {
-        const companyFound = companiesList.filter(e => e.tradeName === name).at(0);
+        const companyFound = companiesList.filter((e) => e.tradeName === name).at(0);
         return companyFound;
     }
 
     function findSellerInList(name: string) {
-        const sellerFound = sellersList.filter(e => e.name === name).at(0);
+        const sellerFound = sellersList.filter((e) => e.name === name).at(0);
         return sellerFound;
     }
 
@@ -264,13 +264,13 @@ export default function ContractForm() {
         formik.setFieldValue('paymentDueDay', contract.paymentDueDay);
         formik.setFieldValue('observation', contract.observation);
         setVisibleDialog(true);
-    }
+    };
 
     const startContent = (
         <React.Fragment>
-            <Button icon="pi pi-plus-circle" label='Novo' onClick={newContract} />
+            <Button icon="pi pi-plus-circle" label="Novo" onClick={newContract} />
             <span className="pi pi-ellipsis-v ml-2 mr-2" />
-            <Button icon="pi pi-search" label='Buscar' onClick={newSearch} />
+            <Button icon="pi pi-search" label="Buscar" onClick={newSearch} />
         </React.Fragment>
     );
 
@@ -285,21 +285,39 @@ export default function ContractForm() {
         <div>
             <Toast ref={toast} />
 
-            <ContractDatatable startContent={startContent} contractDetails={contractDetails} toast={toast}
-                searchVisible={searchVisible} closeSearchDialog={closeSearchDialog}
-                generateContractVisible={generateContractVisible} closeGenerateContractDialog={closeGenerateContractDialog}
+            <ContractDatatable
+                startContent={startContent}
+                contractDetails={contractDetails}
+                toast={toast}
+                searchVisible={searchVisible}
+                closeSearchDialog={closeSearchDialog}
+                generateContractVisible={generateContractVisible}
+                closeGenerateContractDialog={closeGenerateContractDialog}
                 openGenerateContractDialog={openGenerateContractDialog}
-                digitalDocVisible={digitalDocVisible} openDigitalDocDialog={openDigitalDocDialog} closeDigitalDocDialog={closeDigitalDocDialog}
-                companiesFilteredList={companiesFilteredList} companyCompleteMethod={companyCompleteMethod}
-                sellersList={sellersList} />
+                digitalDocVisible={digitalDocVisible}
+                openDigitalDocDialog={openDigitalDocDialog}
+                closeDigitalDocDialog={closeDigitalDocDialog}
+                companiesFilteredList={companiesFilteredList}
+                companyCompleteMethod={companyCompleteMethod}
+                sellersList={sellersList}
+            />
 
-            <Dialog header="Detalhes do Contrato" visible={visibleDialog} style={{ width: '45vw', minWidth: "45vw" }} breakpoints={{ '1200px': '65vw', '641px': '70vw' }} onHide={() => setVisibleDialog(false)}
-                footer={modalFooter} draggable={false}>
+            <Dialog
+                header="Detalhes do Contrato"
+                visible={visibleDialog}
+                style={{ width: '45vw', minWidth: '45vw' }}
+                breakpoints={{ '1200px': '65vw', '641px': '70vw' }}
+                onHide={() => setVisibleDialog(false)}
+                footer={modalFooter}
+                draggable={false}
+            >
                 <div className="card p-fluid">
                     <form onSubmit={formik.handleSubmit}>
                         <div className="p-fluid formgrid grid">
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='clientCompany' style={{ marginBottom: '0.5rem' }}>Empresa:</label>
+                                <label htmlFor="clientCompany" style={{ marginBottom: '0.5rem' }}>
+                                    Empresa:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-building"></i>
@@ -316,13 +334,18 @@ export default function ContractForm() {
                                         itemTemplate={(company: Company) => company.tradeName.toUpperCase()}
                                         selectedItemTemplate={(company: Company) => company.tradeName.toUpperCase()}
                                         onBlur={formik.handleBlur}
-                                        className={isFormFieldValid('clientCompany') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('clientCompany') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('clientCompany')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='seller' style={{ marginBottom: '0.5rem' }}>Vendedor</label>
+                                <label htmlFor="seller" style={{ marginBottom: '0.5rem' }}>
+                                    Vendedor
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-user"></i>
@@ -332,17 +355,22 @@ export default function ContractForm() {
                                         name="seller"
                                         value={formik.values.seller}
                                         onChange={formik.handleChange}
-                                        options={sellersList} optionLabel="name"
+                                        options={sellersList}
+                                        optionLabel="name"
                                         itemTemplate={(seller: Seller) => seller.name.toUpperCase()}
-                                        placeholder="SELECIONE" filter
+                                        placeholder="SELECIONE"
+                                        filter
                                         emptyMessage="Nenhum vendedor encontrado"
-                                        className={isFormFieldValid('seller') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={isFormFieldValid('seller') ? 'p-invalid uppercase' : 'uppercase'}
+                                    />
                                 </div>
                                 {getFormErrorMessage('seller')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='quantitySpotDay' style={{ marginBottom: '0.5rem' }}>Quantidade Spot/Dia:</label>
+                                <label htmlFor="quantitySpotDay" style={{ marginBottom: '0.5rem' }}>
+                                    Quantidade Spot/Dia:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-chevron-up"></i>
@@ -353,14 +381,22 @@ export default function ContractForm() {
                                         value={formik.values.quantitySpotDay}
                                         onValueChange={formik.handleChange}
                                         useGrouping={false}
-                                        mode="decimal" showButtons min={0} max={100}
-                                        className={isFormFieldValid('quantitySpotDay') ? "p-invalid uppercase" : "uppercase"} />
+                                        mode="decimal"
+                                        showButtons
+                                        min={0}
+                                        max={100}
+                                        className={
+                                            isFormFieldValid('quantitySpotDay') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('quantitySpotDay')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='spotDuration' style={{ marginBottom: '0.5rem' }}>Tempo do Spot:</label>
+                                <label htmlFor="spotDuration" style={{ marginBottom: '0.5rem' }}>
+                                    Tempo do Spot:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-stopwatch"></i>
@@ -372,13 +408,18 @@ export default function ContractForm() {
                                         onChange={formik.handleChange}
                                         mask="9.99"
                                         placeholder="0.30"
-                                        className={isFormFieldValid('spotDuration') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('spotDuration') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('spotDuration')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='testimonialQuantity' style={{ marginBottom: '0.5rem' }}>Quantidade Testemunhal:</label>
+                                <label htmlFor="testimonialQuantity" style={{ marginBottom: '0.5rem' }}>
+                                    Quantidade Testemunhal:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-chevron-up"></i>
@@ -389,14 +430,24 @@ export default function ContractForm() {
                                         value={formik.values.testimonialQuantity}
                                         onValueChange={formik.handleChange}
                                         useGrouping={false}
-                                        mode="decimal" showButtons min={0} max={100}
-                                        className={isFormFieldValid('testimonialQuantity') ? "p-invalid uppercase" : "uppercase"} />
+                                        mode="decimal"
+                                        showButtons
+                                        min={0}
+                                        max={100}
+                                        className={
+                                            isFormFieldValid('testimonialQuantity')
+                                                ? 'p-invalid uppercase'
+                                                : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('testimonialQuantity')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='testimonialDuration' style={{ marginBottom: '0.5rem' }}>Tempo do Testemunhal:</label>
+                                <label htmlFor="testimonialDuration" style={{ marginBottom: '0.5rem' }}>
+                                    Tempo do Testemunhal:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-stopwatch"></i>
@@ -408,13 +459,20 @@ export default function ContractForm() {
                                         onChange={formik.handleChange}
                                         mask="9.99"
                                         placeholder="0.30"
-                                        className={isFormFieldValid('testimonialDuration') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('testimonialDuration')
+                                                ? 'p-invalid uppercase'
+                                                : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('testimonialDuration')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='startDate' style={{ marginBottom: '0.5rem' }}>Data de Início:</label>
+                                <label htmlFor="startDate" style={{ marginBottom: '0.5rem' }}>
+                                    Data de Início:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-calendar"></i>
@@ -424,14 +482,18 @@ export default function ContractForm() {
                                         name="startDate"
                                         value={formik.values.startDate}
                                         onChange={(e) => formik.setFieldValue('startDate', new Date(e.value as Date))}
-                                        dateFormat="dd/mm/yy" locale="pt-BR"
-                                        className={isFormFieldValid('startDate') ? "p-invalid uppercase" : "uppercase"} />
+                                        dateFormat="dd/mm/yy"
+                                        locale="pt-BR"
+                                        className={isFormFieldValid('startDate') ? 'p-invalid uppercase' : 'uppercase'}
+                                    />
                                 </div>
                                 {getFormErrorMessage('startDate')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='endDate' style={{ marginBottom: '0.5rem' }}>Data de Término:</label>
+                                <label htmlFor="endDate" style={{ marginBottom: '0.5rem' }}>
+                                    Data de Término:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-calendar"></i>
@@ -441,14 +503,18 @@ export default function ContractForm() {
                                         name="endDate"
                                         value={formik.values.endDate}
                                         onChange={(e) => formik.setFieldValue('endDate', new Date(e.value as Date))}
-                                        dateFormat="dd/mm/yy" locale="pt-BR"
-                                        className={isFormFieldValid('endDate') ? "p-invalid uppercase" : "uppercase"} />
+                                        dateFormat="dd/mm/yy"
+                                        locale="pt-BR"
+                                        className={isFormFieldValid('endDate') ? 'p-invalid uppercase' : 'uppercase'}
+                                    />
                                 </div>
                                 {getFormErrorMessage('endDate')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='flashQuantity' style={{ marginBottom: '0.5rem' }}>Quantidade Flash:</label>
+                                <label htmlFor="flashQuantity" style={{ marginBottom: '0.5rem' }}>
+                                    Quantidade Flash:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-chevron-up"></i>
@@ -459,14 +525,22 @@ export default function ContractForm() {
                                         value={formik.values.flashQuantity}
                                         onValueChange={formik.handleChange}
                                         useGrouping={false}
-                                        mode="decimal" showButtons min={0} max={10}
-                                        className={isFormFieldValid('flashQuantity') ? "p-invalid uppercase" : "uppercase"} />
+                                        mode="decimal"
+                                        showButtons
+                                        min={0}
+                                        max={10}
+                                        className={
+                                            isFormFieldValid('flashQuantity') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('flashQuantity')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='newspaperParticipation' style={{ marginBottom: '0.5rem' }}>Participação no Jornal</label>
+                                <label htmlFor="newspaperParticipation" style={{ marginBottom: '0.5rem' }}>
+                                    Participação no Jornal
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-clock"></i>
@@ -477,14 +551,22 @@ export default function ContractForm() {
                                         value={formik.values.newspaperParticipation}
                                         onChange={formik.handleChange}
                                         options={newspaperParticipationTimes}
-                                        showClear placeholder="Duração"
-                                        className={isFormFieldValid('newspaperParticipation') ? "p-invalid uppercase" : "uppercase"} />
+                                        showClear
+                                        placeholder="Duração"
+                                        className={
+                                            isFormFieldValid('newspaperParticipation')
+                                                ? 'p-invalid uppercase'
+                                                : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('newspaperParticipation')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='monthlyPrice' style={{ marginBottom: '0.5rem' }}>Preço Mensal:</label>
+                                <label htmlFor="monthlyPrice" style={{ marginBottom: '0.5rem' }}>
+                                    Preço Mensal:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-dollar"></i>
@@ -494,15 +576,22 @@ export default function ContractForm() {
                                         name="monthlyPrice"
                                         value={formik.values.monthlyPrice}
                                         onValueChange={formik.handleChange}
-                                        mode="currency" currency="BRL" locale="pt-BR"
+                                        mode="currency"
+                                        currency="BRL"
+                                        locale="pt-BR"
                                         placeholder="R$ 500,00"
-                                        className={isFormFieldValid('monthlyPrice') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('monthlyPrice') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('monthlyPrice')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='paymentMethod' style={{ marginBottom: '0.5rem' }}>Forma de Pagamento</label>
+                                <label htmlFor="paymentMethod" style={{ marginBottom: '0.5rem' }}>
+                                    Forma de Pagamento
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-wallet"></i>
@@ -514,13 +603,18 @@ export default function ContractForm() {
                                         onChange={formik.handleChange}
                                         options={paymentMethods}
                                         showClear
-                                        className={isFormFieldValid('paymentMethod') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('paymentMethod') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('paymentMethod')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='paymentDueDay' style={{ marginBottom: '0.5rem' }}>Dia de Vencimento:</label>
+                                <label htmlFor="paymentDueDay" style={{ marginBottom: '0.5rem' }}>
+                                    Dia de Vencimento:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-calendar"></i>
@@ -531,15 +625,23 @@ export default function ContractForm() {
                                         value={formik.values.paymentDueDay}
                                         onValueChange={formik.handleChange}
                                         useGrouping={false}
-                                        mode="decimal" showButtons min={1} max={31}
+                                        mode="decimal"
+                                        showButtons
+                                        min={1}
+                                        max={31}
                                         placeholder="Dia 10"
-                                        className={isFormFieldValid('paymentDueDay') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('paymentDueDay') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('paymentDueDay')}
                             </div>
 
                             <div className="field col-12 md:col-6">
-                                <label htmlFor='advertisingOrder' style={{ marginBottom: '0.5rem' }}>Ordem de Propaganda:</label>
+                                <label htmlFor="advertisingOrder" style={{ marginBottom: '0.5rem' }}>
+                                    Ordem de Propaganda:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <span className="p-inputgroup-addon">
                                         <i className="pi pi-flag"></i>
@@ -549,13 +651,18 @@ export default function ContractForm() {
                                         name="advertisingOrder"
                                         value={formik.values.advertisingOrder}
                                         onChange={formik.handleChange}
-                                        className={isFormFieldValid('advertisingOrder') ? "p-invalid uppercase" : "uppercase"} />
+                                        className={
+                                            isFormFieldValid('advertisingOrder') ? 'p-invalid uppercase' : 'uppercase'
+                                        }
+                                    />
                                 </div>
                                 {getFormErrorMessage('advertisingOrder')}
                             </div>
 
                             <div className="field col-12 md:col-12">
-                                <label htmlFor='observation' style={{ marginBottom: '0.5rem' }}>Observação:</label>
+                                <label htmlFor="observation" style={{ marginBottom: '0.5rem' }}>
+                                    Observação:
+                                </label>
                                 <div className="p-inputgroup flex-1">
                                     <InputTextarea
                                         id="observation"
@@ -563,7 +670,9 @@ export default function ContractForm() {
                                         autoResize
                                         value={formik.values.observation}
                                         onChange={formik.handleChange}
-                                        rows={5} cols={30} />
+                                        rows={5}
+                                        cols={30}
+                                    />
                                 </div>
                             </div>
                         </div>
