@@ -71,17 +71,17 @@ export default function SellerDatatable(props: SellerDatatableProps) {
 
     const tableActions = (rowData: Seller) => {
         return (
-            <React.Fragment>
+            <div className='flex items-center justify-content-center gap-2'>
                 <Button icon="pi pi-pencil" rounded onClick={() => props.sellerDetails(rowData)} />
-                <span style={{ marginBottom: "1rem", marginLeft: "5px", marginRight: "5px" }} className="pi pi-ellipsis-v"></span>
+                <span className="pi pi-ellipsis-v mt-2"></span>
                 <Button icon="pi pi-trash" rounded severity="danger" onClick={() => confirmDeleteSeller(rowData)} />
-            </React.Fragment>
+            </div>
         );
     };
 
     const imageBody = (rowData: Seller) => {
         return <>
-            <Avatar icon="pi pi-user" image={rowData.urlImage} onClick={(e) => openTableImageDialog((e.target as HTMLImageElement).currentSrc)} size="xlarge" className="mr-2 shadow-4" shape="circle" />
+            <Avatar icon="pi pi-user" image={rowData.urlImage} onClick={(e) => openTableImageDialog((e.target as HTMLImageElement).currentSrc)} size="large" className="mr-2 shadow-4" shape="circle" />
         </>
     };
 
