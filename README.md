@@ -58,7 +58,7 @@ Siga os passos abaixo para configurar o projeto em sua máquina local:
 
 ### Rodando a aplicação
 
-Requer Node.js 20.19+ ou 22.12+. Para iniciar a aplicação em modo de desenvolvimento (http://localhost:3000), execute o comando:
+Requer Node.js 20.19+ ou 22.12+. Para iniciar a aplicação em modo de desenvolvimento (http://localhost:5173), execute o comando:
 
 ```bash
 npm run dev
