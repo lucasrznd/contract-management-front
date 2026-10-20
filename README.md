@@ -4,6 +4,8 @@
 
 ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 ![React Query](https://img.shields.io/badge/-React%20Query-FF4154?style=for-the-badge&logo=react%20query&logoColor=white)
 </div>
 
@@ -45,15 +47,33 @@ Siga os passos abaixo para configurar o projeto em sua máquina local:
     yarn install
     ```
 
+3. Crie o arquivo `.env` a partir do exemplo e ajuste a URL da API:
+    ```bash
+    cp .env.example .env
+    ```
+
+    | Variável | Descrição |
+    | --- | --- |
+    | `VITE_API_BASE_URL` | URL base da [contract-management-api](https://github.com/lucasrznd/contract-management-api) |
+
 ### Rodando a aplicação
 
-Para iniciar a aplicação em modo de desenvolvimento, execute o comando:
+Requer Node.js 20.19+ ou 22.12+. Para iniciar a aplicação em modo de desenvolvimento (http://localhost:3000), execute o comando:
 
 ```bash
-npm start
+npm run dev
 # or
-yarn start
+npm start
 ```
+
+Outros comandos:
+
+| Comando | Descrição |
+| --- | --- |
+| `npm run build` | Verifica os tipos e gera o build de produção em `build/` |
+| `npm run preview` | Serve localmente o build de produção |
+| `npm run typecheck` | Executa apenas a verificação de tipos do TypeScript |
+| `npm test` | Executa os testes com Vitest |
 
 <h2 id="contribution">🤝 Contribuição</h2>
 
