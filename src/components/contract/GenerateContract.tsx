@@ -1,14 +1,14 @@
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Splitter, SplitterPanel } from "primereact/splitter";
-import { Toast } from "primereact/toast";
-import { useRef, useState, type ReactNode, type Ref } from "react";
-import { useFetchContractPdf } from "../../hooks/contract/useContractGetPDF";
-import { errorMsg, successMsg } from "../../functions/ToastMessage";
-import { Accordion, AccordionTab } from "primereact/accordion";
-import { ConfirmPopup } from "primereact/confirmpopup";
-import { useContractCreateDigitalDoc } from "../../hooks/contract/useContractCreateDigitalDoc";
-import type { Contract } from "../../types";
+import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
+import { Splitter, SplitterPanel } from 'primereact/splitter';
+import { Toast } from 'primereact/toast';
+import { useRef, useState, type ReactNode, type Ref } from 'react';
+import { useFetchContractPdf } from '../../hooks/contract/useContractGetPDF';
+import { errorMsg, successMsg } from '../../functions/ToastMessage';
+import { Accordion, AccordionTab } from 'primereact/accordion';
+import { ConfirmPopup } from 'primereact/confirmpopup';
+import { useContractCreateDigitalDoc } from '../../hooks/contract/useContractCreateDigitalDoc';
+import type { Contract } from '../../types';
 
 interface GenerateContractProps {
     generateContractVisible: boolean;
@@ -33,12 +33,12 @@ export default function PDFContract(props: GenerateContractProps) {
     const [tabs] = useState<Tab[]>([
         {
             header: 'PDF',
-            children: <p className="m-0">Gera o contrato em PDF para download e impressão.</p>
+            children: <p className="m-0">Gera o contrato em PDF para download e impressão.</p>,
         },
         {
             header: 'Contrato Digital (Não disponível)',
-            children: <p className="m-0">Gera o contrato digital para assinatura do Cliente.</p>
-        }
+            children: <p className="m-0">Gera o contrato digital para assinatura do Cliente.</p>,
+        },
     ]);
 
     const generatePDF = () => {
@@ -49,11 +49,11 @@ export default function PDFContract(props: GenerateContractProps) {
                 errorMsg(toast, error.message);
             },
             onSuccess: () => {
-                successMsg(toast, "PDF gerado com sucesso.");
+                successMsg(toast, 'PDF gerado com sucesso.');
                 props.closeGenerateContractDialog();
-            }
+            },
         });
-    }
+    };
 
     const createDigitalDoc = () => {
         if (!props.data) return;
@@ -61,11 +61,11 @@ export default function PDFContract(props: GenerateContractProps) {
         digitalContractMutate(props.data, {
             onError: (error) => {
                 errorMsg(toast, error.message);
-            }
+            },
         });
         successMsg(toast, 'Contrato gerado com sucesso.');
         props.closeGenerateContractDialog();
-    }
+    };
 
     const createDynamicTabs = () => {
         return tabs.map((tab) => {
@@ -87,9 +87,15 @@ export default function PDFContract(props: GenerateContractProps) {
         <>
             <Toast ref={toast} />
 
-            <Dialog header="Gerar Contrato" visible={props.generateContractVisible} style={{ width: '40vw', minWidth: "40vw" }}
-                breakpoints={{ '1000px': '65vw', '641px': '70vw' }} footer={modalFooter}
-                onHide={() => props.closeGenerateContractDialog()} draggable={false}>
+            <Dialog
+                header="Gerar Contrato"
+                visible={props.generateContractVisible}
+                style={{ width: '40vw', minWidth: '40vw' }}
+                breakpoints={{ '1000px': '65vw', '641px': '70vw' }}
+                footer={modalFooter}
+                onHide={() => props.closeGenerateContractDialog()}
+                draggable={false}
+            >
                 <div className="card">
                     <Accordion>{createDynamicTabs()}</Accordion>
                 </div>
@@ -98,16 +104,30 @@ export default function PDFContract(props: GenerateContractProps) {
                         <Button icon="pi pi-file-pdf" label="PDF" severity="warning" onClick={() => generatePDF()} />
                     </SplitterPanel>
                     <SplitterPanel className="flex align-items-center justify-content-center">
-                        <ConfirmPopup target={buttonEl.current ?? undefined} visible={visible} onHide={() => setVisible(false)}
-                            message="Tem certeza que deseja prosseguir?" icon="pi pi-exclamation-triangle" acceptLabel="Sim" rejectLabel="Não"
-                            accept={() => createDigitalDoc()} />
+                        <ConfirmPopup
+                            target={buttonEl.current ?? undefined}
+                            visible={visible}
+                            onHide={() => setVisible(false)}
+                            message="Tem certeza que deseja prosseguir?"
+                            icon="pi pi-exclamation-triangle"
+                            acceptLabel="Sim"
+                            rejectLabel="Não"
+                            accept={() => createDigitalDoc()}
+                        />
                         <div className="card flex justify-content-center">
-                            <Button label="Contrato Digital" icon="pi pi-file-word" severity="info" disabled ref={buttonEl as unknown as Ref<Button>} onClick={() => setVisible(true)} />
+                            <Button
+                                label="Contrato Digital"
+                                icon="pi pi-file-word"
+                                severity="info"
+                                disabled
+                                ref={buttonEl as unknown as Ref<Button>}
+                                onClick={() => setVisible(true)}
+                            />
                         </div>
                         {/* <Button icon="pi pi-file-word" label="Contrato Digital" severity="info" /> */}
                     </SplitterPanel>
                 </Splitter>
             </Dialog>
         </>
-    )
+    );
 }

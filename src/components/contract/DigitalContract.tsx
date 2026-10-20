@@ -1,12 +1,12 @@
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Splitter, SplitterPanel } from "primereact/splitter";
-import { Toast } from "primereact/toast";
-import { useRef, useState } from "react";
-import { errorMsg, successMsg } from "../../functions/ToastMessage";
-import axios from "axios";
-import { InputText } from "primereact/inputtext";
-import type { Contract, DigitalDocument } from "../../types";
+import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
+import { Splitter, SplitterPanel } from 'primereact/splitter';
+import { Toast } from 'primereact/toast';
+import { useRef, useState } from 'react';
+import { errorMsg, successMsg } from '../../functions/ToastMessage';
+import axios from 'axios';
+import { InputText } from 'primereact/inputtext';
+import type { Contract, DigitalDocument } from '../../types';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL + '/contracts/get-doc';
 
@@ -28,33 +28,33 @@ export default function DigitalContract(props: DigitalContractProps) {
             try {
                 const response = await axios.get<DigitalDocument>(API_URL, { params: { token: token } });
                 setContract({ ...response.data });
-                console.log(response.data)
+                console.log(response.data);
                 successMsg(toast, 'Contrato encontrado com sucesso.');
             } catch (error) {
                 errorMsg(toast, (error as Error).message);
             }
         }
-    }
+    };
 
     const closeDigitalDocDialog = () => {
         props.closeDigitalDocDialog();
         setContract(undefined);
-    }
+    };
 
     const openOriginalFile = async () => {
         if (contract === undefined) {
-            return errorMsg(toast, 'Consulte o contrato para visualizar o link.')
+            return errorMsg(toast, 'Consulte o contrato para visualizar o link.');
         }
         window.open(contract.original_file, 'blank');
-    }
+    };
 
     const openSignUrl = async () => {
         if (contract === undefined) {
-            return errorMsg(toast, 'Consulte o contrato para visualizar o link.')
+            return errorMsg(toast, 'Consulte o contrato para visualizar o link.');
         }
 
         window.open(contract.signers[0].sign_url, 'blank');
-    }
+    };
 
     const modalFooter = (
         <div>
@@ -67,9 +67,15 @@ export default function DigitalContract(props: DigitalContractProps) {
         <>
             <Toast ref={toast} />
 
-            <Dialog header="Contrato Digital" visible={props.digitalDocVisible} style={{ width: '40vw', minWidth: "40vw" }}
-                breakpoints={{ '1000px': '65vw', '641px': '70vw' }} footer={modalFooter}
-                onHide={() => closeDigitalDocDialog()} draggable={false}>
+            <Dialog
+                header="Contrato Digital"
+                visible={props.digitalDocVisible}
+                style={{ width: '40vw', minWidth: '40vw' }}
+                breakpoints={{ '1000px': '65vw', '641px': '70vw' }}
+                footer={modalFooter}
+                onHide={() => closeDigitalDocDialog()}
+                draggable={false}
+            >
                 <Splitter style={{ height: '300px' }}>
                     <SplitterPanel className="flex align-items-center justify-content-center">
                         <div className="card p-fluid">
@@ -77,7 +83,14 @@ export default function DigitalContract(props: DigitalContractProps) {
                                 <div className="field col-12 md:col-12">
                                     <label htmlFor="originalContract">Visualizar Arquivo Original</label>
                                     <div className="flex align-items-center justify-content-center">
-                                        <Button id="originalContract" icon="pi pi-file-word" rounded outlined severity="info" onClick={() => openOriginalFile()} />
+                                        <Button
+                                            id="originalContract"
+                                            icon="pi pi-file-word"
+                                            rounded
+                                            outlined
+                                            severity="info"
+                                            onClick={() => openOriginalFile()}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -87,29 +100,42 @@ export default function DigitalContract(props: DigitalContractProps) {
                         <div className="card p-fluid">
                             <div className="p-fluid formgrid grid">
                                 <div className="field col-12 md:col-10 ml-2">
-                                    <label htmlFor='contractStatus' className="mb-1">Nome do Signatário:</label>
+                                    <label htmlFor="contractStatus" className="mb-1">
+                                        Nome do Signatário:
+                                    </label>
                                     <div className="">
                                         <InputText
                                             id="contractStatus"
                                             name="contractStatus"
-                                            value={contract !== undefined ? contract.signers[0].name : ""}
-                                            disabled />
+                                            value={contract !== undefined ? contract.signers[0].name : ''}
+                                            disabled
+                                        />
                                     </div>
                                 </div>
                                 <div className="field col-12 md:col-10 ml-2">
-                                    <label htmlFor='contractStatus' className="mb-1">Status da Assinatura:</label>
+                                    <label htmlFor="contractStatus" className="mb-1">
+                                        Status da Assinatura:
+                                    </label>
                                     <div className="">
                                         <InputText
                                             id="contractStatus"
                                             name="contractStatus"
-                                            value={contract !== undefined ? contract.status : ""}
-                                            disabled />
+                                            value={contract !== undefined ? contract.status : ''}
+                                            disabled
+                                        />
                                     </div>
                                 </div>
                                 <div className="field col-12 md:col-12 ml-2">
                                     <label htmlFor="originalContract">Link para Assinatura</label>
                                     <div className="">
-                                        <Button id="originalContract" icon="pi pi-file-word" rounded outlined severity="warning" onClick={() => openSignUrl()} />
+                                        <Button
+                                            id="originalContract"
+                                            icon="pi pi-file-word"
+                                            rounded
+                                            outlined
+                                            severity="warning"
+                                            onClick={() => openSignUrl()}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -118,5 +144,5 @@ export default function DigitalContract(props: DigitalContractProps) {
                 </Splitter>
             </Dialog>
         </>
-    )
+    );
 }

@@ -8,21 +8,21 @@ import { afterEach, vi } from 'vitest';
 
 // Without vitest globals, Testing Library can't register its automatic cleanup.
 afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
+    cleanup();
+    vi.restoreAllMocks();
 });
 
 // jsdom doesn't implement matchMedia, which primereact's MegaMenu uses for its breakpoint.
 Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  }),
+    writable: true,
+    value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+    }),
 });

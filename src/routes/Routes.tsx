@@ -1,8 +1,8 @@
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import HomePage from "../pages/Home";
-import CompanyPage from "../pages/Company";
-import ContractPage from "../pages/Contract";
-import SellerPage from "../pages/Seller";
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import HomePage from '../pages/Home';
+import CompanyPage from '../pages/Company';
+import ContractPage from '../pages/Contract';
+import SellerPage from '../pages/Seller';
 
 const AppRoutes = () => {
     return (
@@ -14,7 +14,7 @@ const AppRoutes = () => {
                 <Route path="/vendedores" element={<SellerPage />} />
             </Routes>
         </Router>
-    )
-}
+    );
+};
 
 export default AppRoutes;
