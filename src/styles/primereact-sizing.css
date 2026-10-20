@@ -1,0 +1,353 @@
+/*
+ * Scales PrimeReact's Lara theme down to shadcn/ui's sizing (new-york style).
+ * Only sizes change (height, padding, font size/weight); colors and shapes stay Lara's.
+ * Must be imported after the theme CSS so equal-specificity rules win.
+ */
+
+:root {
+  --control-height: 2.25rem;    /* shadcn h-9 */
+  --control-height-sm: 2rem;    /* h-8 */
+  --control-height-lg: 2.5rem;  /* h-10 */
+  --control-padding-x: 0.75rem; /* px-3 */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-lg: 1.125rem;
+}
+
+/* Components default to text-sm, like shadcn's primitives. */
+.p-component {
+  font-size: var(--text-sm);
+}
+
+/* Form labels (primeflex .field) – shadcn Label: text-sm font-medium. */
+.field > label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* ---------- Button ---------- */
+
+.p-button {
+  height: var(--control-height);
+  padding: 0 1rem;
+  font-size: var(--text-sm);
+}
+
+.p-button .p-button-label {
+  font-weight: 500;
+}
+
+.p-button.p-button-icon-only,
+.p-button.p-button-icon-only.p-button-rounded {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+}
+
+.p-button.p-button-sm {
+  height: var(--control-height-sm);
+  padding: 0 0.75rem;
+  font-size: var(--text-sm);
+}
+
+.p-button.p-button-lg {
+  height: var(--control-height-lg);
+  padding: 0 1.5rem;
+  font-size: var(--text-sm);
+}
+
+/* ---------- Inputs (InputText, InputMask, Calendar, AutoComplete, InputNumber) ---------- */
+
+.p-inputtext {
+  font-size: var(--text-sm);
+  padding: 0.25rem var(--control-padding-x);
+}
+
+input.p-inputtext {
+  height: var(--control-height);
+}
+
+/* shadcn Textarea: min-h-16 px-3 py-2. */
+textarea.p-inputtext {
+  min-height: 4rem;
+  padding: 0.5rem var(--control-padding-x);
+}
+
+.p-icon-field-left > .p-inputtext {
+  padding-left: 2.25rem;
+}
+
+.p-icon-field-right > .p-inputtext {
+  padding-right: 2.25rem;
+}
+
+.p-inputgroup-addon {
+  min-width: var(--control-height);
+  padding: 0 var(--control-padding-x);
+  font-size: var(--text-sm);
+}
+
+/* InputNumber's stacked spinner buttons share the input's height instead of 36px each. */
+.p-inputnumber-buttons-stacked .p-inputnumber-button-group .p-button.p-inputnumber-button {
+  width: 2rem;
+  height: auto;
+}
+
+/* ---------- Dropdown / AutoComplete ---------- */
+
+.p-dropdown,
+.p-paginator .p-dropdown {
+  height: var(--control-height);
+}
+
+.p-dropdown .p-dropdown-label {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: calc(var(--control-height) - 2px);
+}
+
+.p-dropdown .p-dropdown-trigger {
+  width: var(--control-height);
+}
+
+/* shadcn SelectContent p-1, SelectItem py-1.5 px-2 rounded-sm text-sm. */
+.p-dropdown-panel .p-dropdown-items,
+.p-autocomplete-panel .p-autocomplete-items {
+  padding: 0.25rem;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item,
+.p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: var(--text-sm);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-empty-message {
+  padding: 0.375rem 0.5rem;
+  font-size: var(--text-sm);
+}
+
+.p-dropdown-panel .p-dropdown-header {
+  padding: 0.5rem;
+}
+
+/* ---------- Calendar (shadcn Calendar: p-3, 2rem cells) ---------- */
+
+.p-datepicker {
+  padding: 0.75rem;
+}
+
+.p-datepicker .p-datepicker-header {
+  padding: 0 0 0.5rem;
+}
+
+.p-datepicker .p-datepicker-header .p-datepicker-title {
+  line-height: 1.75rem;
+}
+
+.p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-month,
+.p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-year {
+  padding: 0.25rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.p-datepicker .p-datepicker-header .p-datepicker-prev,
+.p-datepicker .p-datepicker-header .p-datepicker-next {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.p-datepicker table {
+  font-size: var(--text-sm);
+  margin: 0.25rem 0 0;
+}
+
+.p-datepicker table th,
+.p-datepicker table td {
+  padding: 0.125rem;
+}
+
+.p-datepicker table th {
+  font-weight: 500;
+}
+
+.p-datepicker table th > span,
+.p-datepicker table td > span {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* ---------- DataTable (shadcn Table: text-sm, th h-10 px-2 font-medium, td p-2) ---------- */
+
+.p-datatable .p-datatable-header {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  font-weight: 500;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.5rem;
+}
+
+/* ---------- Paginator (shadcn PaginationLink size-9) ---------- */
+
+.p-paginator {
+  padding: 0.5rem 1rem;
+}
+
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last,
+.p-paginator .p-paginator-pages .p-paginator-page,
+.p-paginator .p-paginator-current {
+  min-width: var(--control-height);
+  height: var(--control-height);
+  margin: 0.125rem;
+  font-size: var(--text-sm);
+}
+
+/* ---------- Dialog (shadcn DialogContent p-6, DialogTitle text-lg font-semibold) ---------- */
+
+.p-dialog .p-dialog-header {
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.p-dialog .p-dialog-header .p-dialog-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.p-dialog .p-dialog-content {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.p-dialog .p-dialog-footer {
+  padding: 0 1.5rem 1.5rem;
+}
+
+/* ---------- Toolbar / Panel ---------- */
+
+.p-toolbar {
+  padding: 0.75rem;
+}
+
+.p-panel .p-panel-header .p-panel-title {
+  font-weight: 600;
+}
+
+/* ---------- MegaMenu (shadcn NavigationMenu trigger: h-9 px-4 py-2 text-sm font-medium) ---------- */
+
+.p-megamenu .p-menuitem > .p-menuitem-content .p-menuitem-link,
+.p-megamenu.p-megamenu-horizontal .p-megamenu-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link {
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* ---------- Toast (sonner: 356px wide, small icon) ---------- */
+
+/* div. raises specificity over the base CSS PrimeReact injects at runtime. */
+div.p-toast {
+  max-width: 22.25rem;
+}
+
+.p-toast .p-toast-message .p-toast-message-content {
+  padding: 0.875rem 1rem;
+}
+
+.p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon {
+  font-size: 1.125rem;
+}
+
+.p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon.p-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.p-toast .p-toast-message .p-toast-message-content .p-toast-message-text {
+  margin: 0 0 0 0.75rem;
+}
+
+.p-toast .p-toast-message .p-toast-message-content .p-toast-summary {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.p-toast .p-toast-message .p-toast-message-content .p-toast-detail {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-sm);
+}
+
+.p-toast .p-toast-message .p-toast-icon-close {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* ---------- Tag (shadcn Badge: text-xs font-medium px-2 py-0.5) ---------- */
+
+.p-tag {
+  padding: 0.125rem 0.5rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+/* ---------- TabView / Accordion ---------- */
+
+.p-tabview .p-tabview-nav li .p-tabview-nav-link {
+  padding: 0.75rem 1rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.p-tabview .p-tabview-panels {
+  padding: 1rem 0 0;
+}
+
+.p-accordion .p-accordion-header .p-accordion-header-link {
+  padding: 0.75rem 1rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.p-accordion .p-accordion-content {
+  padding: 1rem;
+}
+
+/* ---------- ConfirmPopup ---------- */
+
+.p-confirm-popup .p-confirm-popup-content {
+  padding: 1rem;
+}
+
+.p-confirm-popup .p-confirm-popup-footer {
+  padding: 0 1rem 1rem;
+}
+
+.p-confirm-popup .p-confirm-popup-icon {
+  font-size: 1.25rem;
+}
+
+.p-confirm-popup .p-confirm-popup-icon.p-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ---------- ProgressSpinner (default is 100px) ---------- */
+
+div.p-progress-spinner {
+  width: 3rem;
+  height: 3rem;
+}
