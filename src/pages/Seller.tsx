@@ -1,22 +1,14 @@
-import { Helmet, HelmetProvider } from 'react-helmet-async';
-import AppFooter from '../components/footer/AppFooter';
-import AppMenu from '../components/menu/AppMenu';
+import { Helmet } from 'react-helmet-async';
 import SellerForm from '../components/seller/SellerForm';
 
 export default function SellerPage() {
     return (
         <div>
-            <HelmetProvider>
-                <Helmet>
-                    <title>{'EducadoraGC - Vendedores'}</title>
-                </Helmet>
-            </HelmetProvider>
-
-            <AppMenu />
+            <Helmet>
+                <title>{'EducadoraGC - Vendedores'}</title>
+            </Helmet>
 
             <SellerForm />
-
-            <AppFooter />
         </div>
     );
 }
