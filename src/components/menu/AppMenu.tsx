@@ -1,30 +1,45 @@
+import type { MouseEvent } from 'react';
 import { MegaMenu } from 'primereact/megamenu';
-import type { MenuItem } from 'primereact/menuitem';
+import type { MenuItem, MenuItemCommandEvent } from 'primereact/menuitem';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo-horizontal.png';
 
 export default function AppMenu() {
+    const navigate = useNavigate();
+
+    // Keeps the href (open in new tab, copy link) but navigates without reloading the app.
+    const navigateTo = (path: string): Pick<MenuItem, 'url' | 'command'> => ({
+        url: path,
+        command: ({ originalEvent: e }: MenuItemCommandEvent) => {
+            const event = e as MouseEvent;
+            if (event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            e.preventDefault();
+            navigate(path);
+        },
+    });
+
     const items: MenuItem[] = [
         {
             label: 'Contratos',
             icon: 'pi pi-folder-open',
-            url: '/contratos',
+            ...navigateTo('/contratos'),
         },
         {
             label: 'Empresas',
             icon: 'pi pi-building',
-            url: '/empresas',
+            ...navigateTo('/empresas'),
         },
         {
             label: 'Vendedores',
             icon: 'pi pi-users',
-            url: '/vendedores',
+            ...navigateTo('/vendedores'),
         },
     ];
 
     const start = (
-        <a href="/">
+        <Link to="/">
             <img alt="logo" src={logo} height={60} className="mr-2" />
-        </a>
+        </Link>
     );
 
     return (
