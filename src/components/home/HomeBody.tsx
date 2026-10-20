@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { errorMsg, warnMsg } from '../../functions/ToastMessage';
 import { useContractCount } from '../../hooks/contract/useContractCount';
@@ -109,9 +110,9 @@ export default function HomeBody() {
                                         className="flex align-items-center justify-content-center bg-primary border-round"
                                         style={{ width: '2.5rem', height: '2.5rem' }}
                                     >
-                                        <a href="/contratos">
+                                        <Link to="/contratos">
                                             <i className="pi pi-folder-open text-white text-xl"></i>
-                                        </a>
+                                        </Link>
                                     </div>
                                 </div>
                                 <div className="flex md:align-items-center align-items-stretch flex-wrap">
@@ -135,9 +136,9 @@ export default function HomeBody() {
                                         className="flex align-items-center justify-content-center bg-orange-400 border-round"
                                         style={{ width: '2.5rem', height: '2.5rem' }}
                                     >
-                                        <a href="/empresas">
+                                        <Link to="/empresas">
                                             <i className="pi pi-building text-white text-xl"></i>
-                                        </a>
+                                        </Link>
                                     </div>
                                 </div>
                                 <div className="flex md:align-items-center align-items-stretch flex-wrap">

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -43,6 +44,28 @@ test('home page does not crash when the API answers with HTML instead of JSON', 
     renderRoute('/');
 
     expect(await screen.findByRole('heading', { name: /Erro de conexão com servidor/i })).toBeInTheDocument();
+});
+
+test('menu navigates between pages without reloading the app', async () => {
+    vi.spyOn(axios, 'get').mockRejectedValue(new Error('Network Error'));
+    const location = renderRoute('/');
+
+    await userEvent.click(await screen.findByText('Empresas', { selector: '.p-menuitem-text' }));
+
+    await vi.waitFor(() => expect(location.pathname).toBe('/empresas'));
+    expect(await screen.findByRole('button', { name: 'Novo' })).toBeInTheDocument();
+});
+
+// MegaMenu keeps focus after a click and highlights its first item (Contratos) until something else is clicked.
+test('menu does not leave an item highlighted after navigating', async () => {
+    vi.spyOn(axios, 'get').mockRejectedValue(new Error('Network Error'));
+    const location = renderRoute('/');
+
+    await userEvent.click(await screen.findByText('Vendedores', { selector: '.p-menuitem-text' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/vendedores'));
+
+    await vi.waitFor(() => expect(document.activeElement?.tagName).toBe('MAIN'));
+    expect(document.querySelector('.p-megamenu .p-menuitem.p-focus')).toBeNull();
 });
 
 test('unknown paths redirect to the home page', async () => {
