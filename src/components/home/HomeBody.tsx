@@ -78,7 +78,7 @@ export default function HomeBody() {
             </div>
         }
 
-        if (isSucessFindExpiringContracts) {
+        if (isSucessFindExpiringContracts && Array.isArray(expiringContracts)) {
             return <div>
                 <div className="grid mt-1">
                     <div className="col-12 md:col-6 lg:col-3">
@@ -167,7 +167,7 @@ export default function HomeBody() {
                                     <span className="block text-primary font-bold mb-3">Últimos Contratos</span>
                                 </div>
                             </div>
-                            <DataTable value={lastContracts} tableStyle={{ minWidth: '50rem' }} emptyMessage="Nenhum contrato encontrado."
+                            <DataTable value={Array.isArray(lastContracts) ? lastContracts : []} tableStyle={{ minWidth: '50rem' }} emptyMessage="Nenhum contrato encontrado."
                                 rows={5} key="id">
                                 <Column field="id" header="Código" align="center" alignHeader="center" />
                                 <Column field="companyTradeName" body={(rowData: Contract) => rowData.companyTradeName.toUpperCase()} header="Empresa" align="center" alignHeader="center" />
