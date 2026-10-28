@@ -26,3 +26,6 @@ Object.defineProperty(window, 'matchMedia', {
         dispatchEvent: () => false,
     }),
 });
+
+// jsdom doesn't implement scrolling; the layout scrolls to the top on every navigation.
+window.scrollTo = () => {};
