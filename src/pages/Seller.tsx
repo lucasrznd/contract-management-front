@@ -1,11 +1,11 @@
 import { Helmet } from 'react-helmet-async';
-import SellerDatatable from '../components/seller/SellerDatatable';
-import SellerFormDialog from '../components/seller/SellerFormDialog';
-import DeleteDialog from '../components/dialog/DeleteDialog';
-import { useToast } from '../components/ui/toast/ToastProvider';
-import { useSellerDelete } from '../hooks/seller/useSellerDelete';
-import { useDialogState } from '../hooks/useDialogState';
-import type { Seller } from '../types';
+import SellerDatatable from '@/features/seller/components/SellerDatatable';
+import SellerFormDialog from '@/features/seller/components/SellerFormDialog';
+import DeleteDialog from '@/shared/components/dialog/DeleteDialog';
+import { useToast } from '@/shared/components/ui/toast/ToastProvider';
+import { useSellerDelete } from '@/features/seller/service/seller.service';
+import { useDialogState } from '@/shared/hooks/useDialogState';
+import type { Seller } from '@/features/seller/types/seller.types';
 
 export default function SellerPage() {
     const toast = useToast();
@@ -15,13 +15,15 @@ export default function SellerPage() {
 
     const confirmDelete = () => {
         if (!deletion.item) return;
-        deleteSeller.mutate(deletion.item.id, {
-            onSuccess: () => {
-                deletion.close();
-                toast.success('Vendedor excluído');
+        deleteSeller.mutate(
+            { id: deletion.item.id },
+            {
+                onSuccess: () => {
+                    deletion.close();
+                    toast.success('Vendedor excluído');
+                },
             },
-            onError: () => toast.error('Não foi possível excluir o vendedor.'),
-        });
+        );
     };
 
     return (

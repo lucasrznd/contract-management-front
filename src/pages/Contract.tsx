@@ -1,20 +1,19 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import ContractDatatable from '../components/contract/ContractDatatable';
-import ContractFormDialog from '../components/contract/ContractFormDialog';
-import ContractFilterDialog from '../components/contract/ContractFilterDialog';
-import GenerateContractDialog from '../components/contract/GenerateContractDialog';
-import DigitalContractDialog from '../components/contract/DigitalContractDialog';
-import ContractPdfDialog from '../components/contract/ContractPdfDialog';
-import DeleteDialog from '../components/dialog/DeleteDialog';
-import { useToast } from '../components/ui/toast/ToastProvider';
-import { useContractDelete } from '../hooks/contract/useContractDelete';
-import { useCompanyFindAll } from '../hooks/company/useCompanyFindAll';
-import { useSellerFindAll } from '../hooks/seller/useSellerFindAll';
-import { useDialogState } from '../hooks/useDialogState';
-import type { ContractFilter } from '../hooks/contract/useContractFilter';
-import { formatCode } from '../functions/StringUtils';
-import type { Contract } from '../types';
+import ContractDatatable from '@/features/contract/components/ContractDatatable';
+import ContractFormDialog from '@/features/contract/components/ContractFormDialog';
+import ContractFilterDialog from '@/features/contract/components/ContractFilterDialog';
+import GenerateContractDialog from '@/features/contract/components/GenerateContractDialog';
+import DigitalContractDialog from '@/features/contract/components/DigitalContractDialog';
+import ContractPdfDialog from '@/features/contract/components/ContractPdfDialog';
+import DeleteDialog from '@/shared/components/dialog/DeleteDialog';
+import { useToast } from '@/shared/components/ui/toast/ToastProvider';
+import { useContractDelete } from '@/features/contract/service/contract.service';
+import { useCompanyFindAll } from '@/features/company/service/company.service';
+import { useSellerFindAll } from '@/features/seller/service/seller.service';
+import { useDialogState } from '@/shared/hooks/useDialogState';
+import { formatCode } from '@/shared/helpers/stringUtils.helper';
+import type { Contract, ContractFilter } from '@/features/contract/types/contract.types';
 
 export default function ContractPage() {
     const toast = useToast();
@@ -39,13 +38,15 @@ export default function ContractPage() {
 
     const confirmDelete = () => {
         if (!deletion.item) return;
-        deleteContract.mutate(deletion.item.id, {
-            onSuccess: () => {
-                deletion.close();
-                toast.success('Contrato excluído');
+        deleteContract.mutate(
+            { id: deletion.item.id },
+            {
+                onSuccess: () => {
+                    deletion.close();
+                    toast.success('Contrato excluído');
+                },
             },
-            onError: () => toast.error('Não foi possível excluir o contrato.'),
-        });
+        );
     };
 
     return (
