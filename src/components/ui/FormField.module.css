@@ -1,0 +1,53 @@
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-gray-700);
+}
+
+.required {
+    color: var(--color-danger);
+}
+
+.control {
+    position: relative;
+}
+
+.control :global(.p-inputtext) {
+    width: 100%;
+}
+
+.withIcon :global(.p-inputtext) {
+    padding-left: 36px;
+}
+
+.icon {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    color: var(--color-gray-400);
+    pointer-events: none;
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-danger);
+}
+
+.error svg {
+    flex-shrink: 0;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--color-gray-500);
+}

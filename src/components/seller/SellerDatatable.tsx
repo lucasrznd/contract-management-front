@@ -1,205 +1,199 @@
-import { Panel } from 'primereact/panel';
-import { Toolbar } from 'primereact/toolbar';
-import { DataTable } from 'primereact/datatable';
+import { useMemo, useState } from 'react';
+import { DataTable, type DataTableStateEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import React, { useEffect, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
-import { IconField } from 'primereact/iconfield';
-import { InputIcon } from 'primereact/inputicon';
-import DeleteDialog from '../dialog/DeleteDialog';
-import { errorMsg, warnMsg } from '../../functions/ToastMessage';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import type { SortOrder } from 'primereact/api';
+import PageCard from '../ui/PageCard';
+import SearchInput from '../ui/SearchInput';
+import EmptyState from '../ui/EmptyState';
+import UserAvatar from '../ui/UserAvatar';
+import { paginatorClassName, paginatorTemplate, rowsPerPageOptions } from '../ui/paginator';
+import { CloudOffIcon, PencilIcon, PhoneIcon, PlusIcon, SearchIcon, TrashIcon, UserPlusIcon } from '../icons';
 import { useSellerFindAll } from '../../hooks/seller/useSellerFindAll';
-import { useSellerDelete } from '../../hooks/seller/useSellerDelete';
-import { formatPhoneNumberDt } from '../../functions/StringUtils';
-import serverErrorImage from '../../assets/images/server-error.png';
-import { Toast } from 'primereact/toast';
-import { Avatar } from 'primereact/avatar';
-import ImageDialog from '../dialog/ImageDialog';
+import { formatCode, maskPhone, normalizeSearch } from '../../functions/StringUtils';
 import type { Seller } from '../../types';
+import styles from './SellerDatatable.module.css';
 
 interface SellerDatatableProps {
-    startContent: React.ReactNode;
-    sellerDetails: (seller: Seller) => void;
-    toast?: React.RefObject<Toast | null>;
+    onNew: () => void;
+    onEdit: (seller: Seller) => void;
+    onDelete: (seller: Seller) => void;
 }
 
-export default function SellerDatatable(props: SellerDatatableProps) {
-    const [seller, setSeller] = useState<Partial<Seller>>({});
-    const [globalFilter, setGlobalFilter] = useState<string | null>(null);
-    const [imageVisible, setImageVisible] = useState(false);
-    const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useSellerFindAll();
-    const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useSellerDelete();
-    const [deleteSellerDialog, setDeleteSellerDialog] = useState(false);
-    const toast = useRef<Toast>(null);
+/** Matches the name (ignoring accents), the phone digits or the code. */
+function matchesSearch(seller: Seller, search: string) {
+    const text = normalizeSearch(search.trim());
+    const digits = search.replace(/\D/g, '');
+    if (!text) return true;
+    return (
+        normalizeSearch(seller.name).includes(text) ||
+        (!!digits && (seller.phoneNumber.replace(/\D/g, '').includes(digits) || String(seller.id) === digits))
+    );
+}
 
-    useEffect(() => {
-        hideDeleteDialog();
-    }, [isSucessDeleting]);
+export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatatableProps) {
+    const { data, isLoading, isError } = useSellerFindAll();
+    const [search, setSearch] = useState('');
+    const [first, setFirst] = useState(0);
+    const [rows, setRows] = useState(rowsPerPageOptions[0]);
+    const [sortField, setSortField] = useState<keyof Seller>('id');
+    const [sortOrder, setSortOrder] = useState<SortOrder>(1);
 
-    useEffect(() => {
-        if (isErrorFindingAll) {
-            errorMsg(toast, 'Erro de conexão com servidor.');
-        }
-    }, [isErrorFindingAll]);
+    // A misconfigured API URL answers with index.html instead of a list.
+    const sellers = Array.isArray(data) ? data : undefined;
+    const filtered = useMemo(
+        () => (sellers ?? []).filter((seller) => matchesSearch(seller, search)),
+        [sellers, search],
+    );
 
-    const deleteSeller = () => {
-        mutate(seller.id!);
-
-        isErrorDeleting
-            ? errorMsg(toast, 'Erro ao remover vendedor.')
-            : warnMsg(toast, 'Vendedor removido com sucesso.');
+    const changeSearch = (value: string) => {
+        setSearch(value);
+        setFirst(0);
     };
 
-    const confirmDeleteSeller = (seller: Seller) => {
-        setSeller({ ...seller });
-        setDeleteSellerDialog(true);
-    };
+    const newSellerButton = <Button label="Novo vendedor" icon={<PlusIcon />} onClick={onNew} />;
 
-    const hideDeleteDialog = () => {
-        setDeleteSellerDialog(false);
-    };
-
-    const tableHeader = (
-        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Vendedores</h4>
-            <IconField iconPosition="left">
-                <InputIcon className="pi pi-search"> </InputIcon>
-                <InputText
-                    type="search"
-                    onInput={(e) => setGlobalFilter(e.currentTarget.value)}
-                    placeholder="Buscar..."
-                />
-            </IconField>
+    const sellerBody = (seller: Seller) => (
+        <div className={styles.seller}>
+            <UserAvatar name={seller.name} id={seller.id} src={seller.urlImage} />
+            <div className={styles.sellerText}>
+                <div className={styles.name}>{seller.name}</div>
+                <div className={styles.phone}>
+                    <PhoneIcon size={13} />
+                    {maskPhone(seller.phoneNumber)}
+                </div>
+            </div>
         </div>
     );
 
-    const tableActions = (rowData: Seller) => {
-        return (
-            <div className="flex items-center justify-content-center gap-2">
-                <Button icon="pi pi-pencil" rounded onClick={() => props.sellerDetails(rowData)} />
-                <span className="pi pi-ellipsis-v mt-2"></span>
-                <Button icon="pi pi-trash" rounded severity="danger" onClick={() => confirmDeleteSeller(rowData)} />
-            </div>
-        );
-    };
+    const actionsBody = (seller: Seller) => (
+        <div className={styles.actions}>
+            <Button
+                text
+                icon={<PencilIcon />}
+                title="Editar"
+                aria-label={`Editar ${seller.name}`}
+                onClick={() => onEdit(seller)}
+            />
+            <Button
+                text
+                severity="danger"
+                icon={<TrashIcon />}
+                title="Excluir"
+                aria-label={`Excluir ${seller.name}`}
+                onClick={() => onDelete(seller)}
+            />
+        </div>
+    );
 
-    const imageBody = (rowData: Seller) => {
-        return (
-            <>
-                <Avatar
-                    icon="pi pi-user"
-                    image={rowData.urlImage}
-                    onClick={(e) => openTableImageDialog((e.target as HTMLImageElement).currentSrc)}
-                    size="large"
-                    className="mr-2 shadow-4"
-                    shape="circle"
-                />
-            </>
-        );
-    };
-
-    const openTableImageDialog = (rowData: string | undefined) => {
-        setSeller({ ...seller, urlImage: rowData });
-        rowData !== undefined ? setImageVisible(true) : setImageVisible(false);
-    };
-
-    const closeTableImageDialog = () => {
-        setImageVisible(false);
-    };
-
-    const showDatatable = () => {
+    const renderContent = () => {
         if (isLoading) {
             return (
-                <div className="flex align-items-center justify-content-center">
+                <div className={styles.loading}>
                     <ProgressSpinner />
                 </div>
             );
         }
 
-        if (isSuccessFindingAll && Array.isArray(data)) {
+        if (isError || !sellers) {
             return (
-                <div className="card">
-                    <DataTable
-                        value={data}
-                        tableStyle={{ minWidth: '50rem' }}
-                        paginator
-                        globalFilter={globalFilter}
-                        header={tableHeader}
-                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="{first} de {last} de {totalRecords} vendedores"
-                        rows={5}
-                        emptyMessage="Nenhum vendedor encontrado."
-                        key="id"
-                    >
-                        <Column field="id" header="Código" align="center" alignHeader="center" />
-                        <Column
-                            field="name"
-                            body={(rowData: Seller) => rowData.name.toUpperCase()}
-                            header="Nome"
-                            align="center"
-                            alignHeader="center"
+                <EmptyState
+                    tone="danger"
+                    icon={<CloudOffIcon size={26} />}
+                    title="Erro de conexão com servidor."
+                    description="Não foi possível carregar os vendedores. Tente novamente em alguns instantes."
+                />
+            );
+        }
+
+        if (!sellers.length) {
+            return (
+                <EmptyState
+                    icon={<UserPlusIcon size={26} />}
+                    title="Nenhum vendedor cadastrado"
+                    description="Cadastre o primeiro vendedor para poder vinculá-lo aos contratos."
+                    action={newSellerButton}
+                />
+            );
+        }
+
+        if (!filtered.length) {
+            return (
+                <EmptyState
+                    tone="neutral"
+                    icon={<SearchIcon size={22} strokeWidth={1.9} />}
+                    title={`Nenhum resultado para “${search}”`}
+                    description="Confira a grafia ou busque pelo telefone ou código."
+                    action={
+                        <Button
+                            label="Limpar busca"
+                            outlined
+                            className={styles.clearSearch}
+                            onClick={() => changeSearch('')}
                         />
-                        <Column
-                            field="phoneNumber"
-                            body={(rowData: Seller) => formatPhoneNumberDt(rowData, 'phoneNumber')}
-                            header="Telefone"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column field="urlImage" body={imageBody} header="Imagem" align="center" alignHeader="center" />
-                        <Column
-                            body={tableActions}
-                            exportable={false}
-                            style={{ minWidth: '12rem' }}
-                            align="center"
-                            header="Ações"
-                            alignHeader="center"
-                        ></Column>
-                    </DataTable>
-                </div>
+                    }
+                />
             );
         }
 
         return (
-            <div>
-                <div className="flex align-items-center justify-content-center">
-                    <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
-                    <h2 className="text-red-500">Erro de conexão com servidor.</h2>
-                </div>
-
-                <div className="flex align-items-center justify-content-center">
-                    <img alt="logo" src={serverErrorImage} height={320} />
-                </div>
-            </div>
+            <DataTable
+                value={filtered}
+                dataKey="id"
+                className={styles.table}
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={(e: DataTableStateEvent) => {
+                    setSortField(e.sortField as keyof Seller);
+                    setSortOrder(e.sortOrder ?? 1);
+                    setFirst(0);
+                }}
+                sortIcon={({ sorted, sortOrder }) =>
+                    sorted ? <span className={styles.sortArrow}>{sortOrder === 1 ? '↑' : '↓'}</span> : null
+                }
+                paginator
+                first={first}
+                rows={rows}
+                onPage={(e: DataTableStateEvent) => {
+                    setFirst(e.first);
+                    setRows(e.rows);
+                }}
+                rowsPerPageOptions={rowsPerPageOptions}
+                paginatorTemplate={paginatorTemplate}
+                paginatorClassName={paginatorClassName}
+            >
+                <Column
+                    field="id"
+                    header="Código"
+                    sortable
+                    body={(seller: Seller) => <span className={styles.code}>{formatCode(seller.id)}</span>}
+                    headerStyle={{ width: 116 /* 96px + the row's 20px side padding */ }}
+                />
+                <Column field="name" header="Vendedor" sortable body={sellerBody} />
+                <Column
+                    header="Ações"
+                    body={actionsBody}
+                    headerStyle={{ width: 140 /* 120px + the row's 20px side padding */ }}
+                    align="right"
+                    alignHeader="right"
+                />
+            </DataTable>
         );
     };
 
     return (
-        <div>
-            <Toast ref={toast} />
-
-            <Panel>
-                <Toolbar style={{ marginBottom: '10px' }} start={props.startContent} />
-
-                {showDatatable()}
-            </Panel>
-
-            <ImageDialog
-                visible={imageVisible}
-                onHide={closeTableImageDialog}
-                header="Imagem do Vendedor"
-                src={seller.urlImage}
-            />
-
-            <DeleteDialog
-                deleteObjectDialog={deleteSellerDialog}
-                hideDeleteDialog={hideDeleteDialog}
-                deleteObject={deleteSeller}
-                hideDeleteObjectDialog={hideDeleteDialog}
-                object={seller}
-            />
-        </div>
+        <PageCard
+            title="Vendedores"
+            count={sellers?.length}
+            actions={
+                <>
+                    <SearchInput value={search} onChange={changeSearch} placeholder="Nome, telefone ou código" />
+                    {newSellerButton}
+                </>
+            }
+        >
+            {renderContent()}
+        </PageCard>
     );
 }

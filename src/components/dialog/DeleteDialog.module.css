@@ -1,0 +1,60 @@
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px 24px 20px;
+}
+
+.body {
+    display: flex;
+    gap: 14px;
+}
+
+.icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+}
+
+.text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: normal;
+    color: var(--color-gray-900);
+}
+
+.message {
+    font-size: 14px;
+    line-height: normal;
+    color: var(--color-gray-600);
+    text-wrap: pretty;
+}
+
+.message strong {
+    font-weight: 600;
+    color: var(--color-gray-900);
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.actions :global(.p-button) {
+    height: 38px;
+    box-shadow: none;
+}

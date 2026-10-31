@@ -50,22 +50,21 @@ test('menu navigates between pages without reloading the app', async () => {
     vi.spyOn(axios, 'get').mockRejectedValue(new Error('Network Error'));
     const location = renderRoute('/');
 
-    await userEvent.click(await screen.findByText('Empresas', { selector: '.p-menuitem-text' }));
+    await userEvent.click(await screen.findByRole('link', { name: 'Empresas' }));
 
     await vi.waitFor(() => expect(location.pathname).toBe('/empresas'));
     expect(await screen.findByRole('button', { name: 'Novo' })).toBeInTheDocument();
 });
 
-// MegaMenu keeps focus after a click and highlights its first item (Contratos) until something else is clicked.
-test('menu does not leave an item highlighted after navigating', async () => {
+test('menu marks the current page and moves focus to the content after navigating', async () => {
     vi.spyOn(axios, 'get').mockRejectedValue(new Error('Network Error'));
     const location = renderRoute('/');
 
-    await userEvent.click(await screen.findByText('Vendedores', { selector: '.p-menuitem-text' }));
+    await userEvent.click(await screen.findByRole('link', { name: 'Vendedores' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/vendedores'));
 
+    expect(screen.getByRole('link', { name: 'Vendedores' })).toHaveAttribute('aria-current', 'page');
     await vi.waitFor(() => expect(document.activeElement?.tagName).toBe('MAIN'));
-    expect(document.querySelector('.p-megamenu .p-menuitem.p-focus')).toBeNull();
 });
 
 test('unknown paths redirect to the home page', async () => {

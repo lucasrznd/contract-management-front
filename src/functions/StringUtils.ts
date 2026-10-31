@@ -83,3 +83,33 @@ export function replacePdfPath(pdfPath: string | null) {
 
     return null;
 }
+
+/** Masks as you type: (19) 9 9381-8293 for mobiles (11 digits), (19) 3381-8293 for landlines (10). */
+export function maskPhone(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (!digits) return '';
+    if (digits.length <= 2) return `(${digits}`;
+
+    const areaCode = `(${digits.slice(0, 2)}) `;
+    const rest = digits.slice(2);
+    if (digits.length === 11) return `${areaCode}${rest[0]} ${rest.slice(1, 5)}-${rest.slice(5)}`;
+    if (rest.length <= 4) return areaCode + rest;
+    return `${areaCode}${rest.slice(0, 4)}-${rest.slice(4)}`;
+}
+
+/** Record ids are shown zero-padded: 7 → "007". */
+export function formatCode(id: number) {
+    return String(id).padStart(3, '0');
+}
+
+/** First letters of the first and last names: "Ana Paula Moreira" → "AM". */
+export function initials(name: string) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '';
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+/** Lowercase without accents, so "jose" matches "José". */
+export function normalizeSearch(value: string) {
+    return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}

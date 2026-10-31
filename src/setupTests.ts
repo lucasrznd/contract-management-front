@@ -12,7 +12,7 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-// jsdom doesn't implement matchMedia, which primereact's MegaMenu uses for its breakpoint.
+// jsdom doesn't implement matchMedia, which some primereact components use for their breakpoints.
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string) => ({

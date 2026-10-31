@@ -1,0 +1,9 @@
+.fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+input.phone {
+    font-variant-numeric: tabular-nums;
+}
