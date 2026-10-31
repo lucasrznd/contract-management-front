@@ -1,10 +1,10 @@
 /*
- * Geist, the font shadcn/ui ships with, for both PrimeReact components and page text.
+ * Plus Jakarta Sans, the font of the EducadoraGC design, for both PrimeReact components and page text.
  * Must be imported after the theme CSS: Lara sets these same variables on :root.
  */
 
 :root {
-    --font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-    /* Lara enables Inter-only character variants; they don't apply to Geist. */
+    --font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+    /* Lara enables Inter-only character variants; they don't apply to Plus Jakarta Sans. */
     --font-feature-settings: normal;
 }

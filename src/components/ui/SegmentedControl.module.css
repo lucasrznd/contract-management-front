@@ -1,0 +1,37 @@
+.root {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-md);
+    background: var(--color-gray-100);
+}
+
+.option {
+    flex: 1;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-gray-600);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.option:hover {
+    color: var(--color-gray-900);
+}
+
+.option:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.active,
+.active:hover {
+    background: var(--color-surface);
+    color: var(--color-gray-900);
+    box-shadow: var(--shadow-xs);
+}

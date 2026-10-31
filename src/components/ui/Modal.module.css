@@ -1,0 +1,83 @@
+/* div. raises specificity over the global .p-dialog rules. */
+.mask {
+    padding: 0 16px 16px;
+    overflow: auto;
+}
+
+div.modal {
+    max-width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-modal);
+}
+
+/* Forms wrap the header, body and footer; let those be the modal's own flex items. */
+div.modal > form {
+    display: contents;
+}
+
+.header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px 0;
+}
+
+.heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: normal;
+    color: var(--color-gray-900);
+    letter-spacing: -0.01em;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: var(--color-gray-500);
+}
+
+/* Beats the global ghost icon button size. */
+.header button.close:global(.p-button-icon-only) {
+    width: 32px;
+    height: 32px;
+    margin: -4px -8px 0 0;
+    flex-shrink: 0;
+}
+
+.body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 24px 24px;
+}
+
+.footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 24px;
+    background: var(--color-gray-50);
+    border-top: 1px solid var(--color-gray-150);
+}
+
+.footer :global(.p-button) {
+    height: 38px;
+    box-shadow: none;
+}

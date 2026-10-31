@@ -1,6 +1,8 @@
+import { useId, type ReactNode } from 'react';
 import { Button } from 'primereact/button';
-import { Dialog } from 'primereact/dialog';
-import React from 'react';
+import { Modal } from '../ui/Modal';
+import { TrashIcon } from '../icons';
+import styles from './DeleteDialog.module.css';
 
 interface DeleteDialogProps {
     deleteObjectDialog: boolean;
@@ -8,32 +10,44 @@ interface DeleteDialogProps {
     deleteObject: () => void;
     hideDeleteObjectDialog: () => void;
     object?: object;
+    /** Defaults to "Excluir registro?". */
+    title?: string;
+    /** Defaults to a generic warning that the action can't be undone. */
+    message?: ReactNode;
+    loading?: boolean;
 }
 
 export default function DeleteDialog(props: DeleteDialogProps) {
-    const deleteObjectFooter = (
-        <React.Fragment>
-            <Button label="Cancelar" icon="pi pi-times" outlined onClick={props.hideDeleteDialog} />
-            <Button label="Sim" icon="pi pi-check" severity="danger" onClick={props.deleteObject} />
-        </React.Fragment>
-    );
+    const titleId = useId();
 
     return (
-        <div>
-            <Dialog
-                visible={props.deleteObjectDialog}
-                style={{ width: '32rem' }}
-                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-                header="Confirmação"
-                modal
-                footer={deleteObjectFooter}
-                onHide={props.hideDeleteObjectDialog}
-            >
-                <div className="confirmation-content" style={{ display: 'flex', alignItems: 'center' }}>
-                    <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
-                    {props.object && <span>Deseja realmente excluir o registro?</span>}
+        <Modal
+            visible={props.deleteObjectDialog}
+            onHide={props.hideDeleteObjectDialog}
+            labelledBy={titleId}
+            width={420}
+            offsetTop="18vh"
+            role="alertdialog"
+        >
+            <div className={styles.content}>
+                <div className={styles.body}>
+                    <div className={styles.icon}>
+                        <TrashIcon size={18} strokeWidth={2} />
+                    </div>
+                    <div className={styles.text}>
+                        <h2 id={titleId} className={styles.title}>
+                            {props.title ?? 'Excluir registro?'}
+                        </h2>
+                        <div className={styles.message}>
+                            {props.message ?? 'O registro será removido. Esta ação não pode ser desfeita.'}
+                        </div>
+                    </div>
                 </div>
-            </Dialog>
-        </div>
+                <div className={styles.actions}>
+                    <Button label="Cancelar" outlined onClick={props.hideDeleteDialog} />
+                    <Button label="Excluir" severity="danger" onClick={props.deleteObject} loading={props.loading} />
+                </div>
+            </div>
+        </Modal>
     );
 }

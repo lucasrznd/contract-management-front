@@ -1,0 +1,39 @@
+/* div. raises specificity over the base CSS PrimeReact injects at runtime and the global toast rules. */
+div.toast {
+    width: auto;
+    max-width: calc(100vw - 32px);
+}
+
+.toast :global(.p-toast-message) {
+    margin: 8px 0 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-gray-900);
+    box-shadow: var(--shadow-toast);
+}
+
+.toast :global(.p-toast-message .p-toast-message-content) {
+    padding: 0;
+    border: 0;
+}
+
+.content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.successIcon {
+    flex-shrink: 0;
+    color: var(--color-success);
+}
+
+.errorIcon {
+    flex-shrink: 0;
+    color: #f87171;
+}

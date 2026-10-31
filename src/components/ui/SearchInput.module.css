@@ -1,0 +1,48 @@
+.wrapper {
+    position: relative;
+    width: 280px;
+    max-width: 100%;
+}
+
+.icon {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    color: var(--color-gray-400);
+    pointer-events: none;
+}
+
+input.input {
+    width: 100%;
+    padding: 0 34px 0 36px;
+}
+
+/* The clear button replaces the browser's own one. */
+input.input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.clear {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-gray-500);
+    cursor: pointer;
+}
+
+.clear:hover {
+    background: var(--color-gray-100);
+}
+
+.clear:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
