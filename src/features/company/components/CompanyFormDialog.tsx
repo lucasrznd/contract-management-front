@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -21,66 +21,11 @@ import { useCompanyPost, useCompanyPut } from '../service/company.service';
 import { formatCode, maskCnpj, maskCpf, maskPhone, maskZipCode, onlyDigits } from '@/shared/helpers/stringUtils.helper';
 import { errorMessageFormatter } from '@/shared/helpers/messageFormatter.helper';
 import { fetchAddressByZipCode } from '@/shared/api/viaCep.service';
-import { fieldError, textFieldProps } from '@/shared/helpers/formik.helper';
+import { textFieldProps } from '@/shared/helpers/form.helper';
+import { companyFormSchema, type CompanyFormFields } from '../schema/CompanyFormSchema';
 import type { Company, CompanyFormValues } from '../types/company.types';
 
-/** What the inputs hold: masked text, converted to the API's shape on submit. */
-interface CompanyFields {
-    businessName: string;
-    tradeName: string;
-    registrationNumber: string;
-    cpf: string;
-    stateRegistration: string;
-    phoneNumber: string;
-    email: string;
-    zipCode: string;
-    streetName: string;
-    number: string;
-    avenueName: string;
-    city: string;
-    state: string;
-}
-
-const digitsAtLeast = (min: number) => (value?: string) => onlyDigits(value ?? '').length >= min;
-
-const validationSchema = Yup.object({
-    businessName: Yup.string().trim().required('Informe a razão social.'),
-    tradeName: Yup.string().trim().required('Informe o nome fantasia.'),
-    registrationNumber: Yup.string()
-        .required('Informe o CNPJ.')
-        .test('cnpj', 'CNPJ incompleto. Use 99.999.999/9999-99.', digitsAtLeast(14)),
-    cpf: Yup.string().test('cpf', 'CPF incompleto. Use 999.999.999-99.', (value) => !value || digitsAtLeast(11)(value)),
-    phoneNumber: Yup.string()
-        .required('Informe o telefone.')
-        .test('phone', 'Telefone inválido. Use (DD) 9 9999-9999.', digitsAtLeast(10)),
-    email: Yup.string().trim().email('E-mail inválido.'),
-    zipCode: Yup.string().required('Informe o CEP.').test('cep', 'CEP incompleto. Use 99999-999.', digitsAtLeast(8)),
-    streetName: Yup.string().trim().required('Informe a rua.'),
-    number: Yup.string().required('Informe o número.'),
-    avenueName: Yup.string().trim().required('Informe o bairro.'),
-    city: Yup.string().trim().required('Informe a cidade.'),
-    state: Yup.string().trim().required('Informe o estado.').length(2, 'Use a sigla do estado (ex.: PR).'),
-});
-
-function toFields(company: Company | null): CompanyFields {
-    return {
-        businessName: company?.businessName ?? '',
-        tradeName: company?.tradeName ?? '',
-        registrationNumber: maskCnpj(company?.registrationNumber ?? ''),
-        cpf: maskCpf(company?.cpf ?? ''),
-        stateRegistration: company?.stateRegistration ?? '',
-        phoneNumber: maskPhone(company?.phoneNumber ?? ''),
-        email: company?.email ?? '',
-        zipCode: maskZipCode(company?.zipCode ?? ''),
-        streetName: company?.streetName ?? '',
-        number: company ? String(company.number) : '',
-        avenueName: company?.avenueName ?? '',
-        city: company?.city ?? '',
-        state: company?.state ?? '',
-    };
-}
-
-function toPayload(fields: CompanyFields, id?: number): CompanyFormValues {
+function toPayload(fields: CompanyFormFields, id?: number): CompanyFormValues {
     return {
         id,
         businessName: fields.businessName.trim(),
@@ -115,33 +60,54 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
     const [zipCodeStatus, setZipCodeStatus] = useState<'idle' | 'loading' | 'not-found' | 'failed'>('idle');
     const isEditing = company !== null;
 
-    const formik = useFormik<CompanyFields>({
-        initialValues: toFields(company),
-        validationSchema,
-        onSubmit: async (fields) => {
-            try {
-                if (isEditing) {
-                    await updateCompany.mutateAsync(toPayload(fields, company.id));
-                    toast.success('Alterações salvas');
-                } else {
-                    await createCompany.mutateAsync(toPayload(fields));
-                    toast.success('Empresa cadastrada');
-                }
-                onHide();
-            } catch (err) {
-                const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
-                toast.error(apiMessage ?? 'Não foi possível salvar a empresa.');
-            }
+    const form = useForm<CompanyFormFields>({
+        resolver: zodResolver(companyFormSchema),
+        // Errors show up after leaving the field or trying to save, not while typing for the first time.
+        mode: 'onTouched',
+        defaultValues: {
+            businessName: company?.businessName ?? '',
+            tradeName: company?.tradeName ?? '',
+            registrationNumber: maskCnpj(company?.registrationNumber ?? ''),
+            cpf: maskCpf(company?.cpf ?? ''),
+            stateRegistration: company?.stateRegistration ?? '',
+            phoneNumber: maskPhone(company?.phoneNumber ?? ''),
+            email: company?.email ?? '',
+            zipCode: maskZipCode(company?.zipCode ?? ''),
+            streetName: company?.streetName ?? '',
+            number: company ? String(company.number) : '',
+            avenueName: company?.avenueName ?? '',
+            city: company?.city ?? '',
+            state: company?.state ?? '',
         },
     });
+    const { errors, isSubmitting } = form.formState;
 
-    const field = (name: keyof CompanyFields) => textFieldProps(formik, name, `company-${name}`);
-    const error = (name: keyof CompanyFields) => fieldError(formik, name);
+    const onSubmit = async (fields: CompanyFormFields) => {
+        try {
+            if (isEditing) {
+                await updateCompany.mutateAsync(toPayload(fields, company.id));
+                toast.success('Alterações salvas');
+            } else {
+                await createCompany.mutateAsync(toPayload(fields));
+                toast.success('Empresa cadastrada');
+            }
+            onHide();
+        } catch (err) {
+            const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
+            toast.error(apiMessage ?? 'Não foi possível salvar a empresa.');
+        }
+    };
+
+    const field = (name: keyof CompanyFormFields, options?: Parameters<typeof textFieldProps>[3]) =>
+        textFieldProps(form, name, `company-${name}`, options);
+    const error = (name: keyof CompanyFormFields) => errors[name]?.message;
+
+    // Filled-in fields are revalidated only if they were showing an error.
+    const fill = (name: keyof CompanyFormFields, value: string) =>
+        form.setValue(name, value, { shouldValidate: !!form.getFieldState(name).error });
 
     // Typing a complete CEP fills in the address (street and district only when still empty).
-    const changeZipCode = async (value: string) => {
-        const zipCode = maskZipCode(value);
-        await formik.setFieldValue('zipCode', zipCode);
+    const lookUpZipCode = async (zipCode: string) => {
         if (onlyDigits(zipCode).length !== 8) {
             setZipCodeStatus('idle');
             return;
@@ -155,14 +121,10 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                 return;
             }
             setZipCodeStatus('idle');
-            formik.setValues((fields) => ({
-                ...fields,
-                zipCode,
-                city: address.city,
-                state: address.state,
-                streetName: fields.streetName || address.street,
-                avenueName: fields.avenueName || address.district,
-            }));
+            fill('city', address.city);
+            fill('state', address.state);
+            if (!form.getValues('streetName')) fill('streetName', address.street);
+            if (!form.getValues('avenueName')) fill('avenueName', address.district);
         } catch {
             setZipCodeStatus('failed');
         }
@@ -177,7 +139,7 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
 
     return (
         <Modal visible={visible} onHide={onHide} labelledBy={titleId} width={720} position="center">
-            <form onSubmit={formik.handleSubmit} noValidate>
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
                 <ModalHeader
                     id={titleId}
                     title={isEditing ? 'Editar empresa' : 'Nova empresa'}
@@ -214,12 +176,9 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                                 error={error('registrationNumber')}
                             >
                                 <InputText
-                                    {...field('registrationNumber')}
+                                    {...field('registrationNumber', { mask: maskCnpj })}
                                     inputMode="numeric"
                                     placeholder="99.999.999/0001-99"
-                                    onChange={(e) =>
-                                        formik.setFieldValue('registrationNumber', maskCnpj(e.target.value))
-                                    }
                                 />
                             </FormField>
                             <FormField
@@ -238,10 +197,9 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                                 hint="Opcional."
                             >
                                 <InputText
-                                    {...field('cpf')}
+                                    {...field('cpf', { mask: maskCpf })}
                                     inputMode="numeric"
                                     placeholder="999.999.999-99"
-                                    onChange={(e) => formik.setFieldValue('cpf', maskCpf(e.target.value))}
                                 />
                             </FormField>
                         </FormGrid>
@@ -258,10 +216,9 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                                 hint="Celular ou fixo, com DDD."
                             >
                                 <InputText
-                                    {...field('phoneNumber')}
+                                    {...field('phoneNumber', { mask: maskPhone })}
                                     inputMode="tel"
                                     placeholder="(99) 9 9999-9999"
-                                    onChange={(e) => formik.setFieldValue('phoneNumber', maskPhone(e.target.value))}
                                 />
                             </FormField>
                             <FormField id="company-email" label="E-mail" icon={<MailIcon />} error={error('email')}>
@@ -281,10 +238,9 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                                 hint={zipCodeHint}
                             >
                                 <InputText
-                                    {...field('zipCode')}
+                                    {...field('zipCode', { mask: maskZipCode, onChange: lookUpZipCode })}
                                     inputMode="numeric"
                                     placeholder="86400-000"
-                                    onChange={(e) => changeZipCode(e.target.value)}
                                 />
                             </FormField>
                             <div />
@@ -306,11 +262,7 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                                 icon={<HashIcon />}
                                 error={error('number')}
                             >
-                                <InputText
-                                    {...field('number')}
-                                    inputMode="numeric"
-                                    onChange={(e) => formik.setFieldValue('number', onlyDigits(e.target.value))}
-                                />
+                                <InputText {...field('number', { mask: onlyDigits })} inputMode="numeric" />
                             </FormField>
                             <FormField
                                 id="company-avenueName"
@@ -338,10 +290,9 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                                 error={error('state')}
                             >
                                 <InputText
-                                    {...field('state')}
+                                    {...field('state', { mask: (value) => value.toUpperCase() })}
                                     maxLength={2}
                                     placeholder="PR"
-                                    onChange={(e) => formik.setFieldValue('state', e.target.value.toUpperCase())}
                                 />
                             </FormField>
                         </FormGrid>
@@ -353,7 +304,7 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                     <Button
                         type="submit"
                         label={isEditing ? 'Salvar alterações' : 'Cadastrar empresa'}
-                        loading={formik.isSubmitting}
+                        loading={isSubmitting}
                     />
                 </ModalFooter>
             </form>

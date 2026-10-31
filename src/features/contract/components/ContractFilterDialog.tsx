@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/shared/components/ui/Modal';
@@ -11,47 +11,14 @@ import CompanyPicker from '@/features/company/components/CompanyPicker';
 import SellerPicker from '@/features/seller/components/SellerPicker';
 import { BuildingIcon, CalendarIcon, UserIcon } from '@/shared/components/icons';
 import { toIsoDate } from '@/shared/helpers/stringUtils.helper';
-import { fieldError } from '@/shared/helpers/formik.helper';
+import { invalidProps } from '@/shared/helpers/form.helper';
+import { contractFilterSchema, type ContractFilterFields } from '../schema/ContractFilterSchema';
 import '@/shared/config/locale';
 import type { ContractFilter } from '../types/contract.types';
-import type { Company } from '@/features/company/types/company.types';
-import type { Seller } from '@/features/seller/types/seller.types';
 
 type Mode = ContractFilter['kind'];
 
-interface FilterFields {
-    mode: Mode;
-    company: Company | null;
-    seller: Seller | null;
-    startDate: Date | null;
-    endDate: Date | null;
-}
-
-const validationSchema = Yup.object({
-    mode: Yup.string(),
-    company: Yup.object()
-        .nullable()
-        .when('mode', ([mode], schema) =>
-            mode === 'company-seller' ? schema.required('Selecione a empresa.') : schema,
-        ),
-    seller: Yup.object()
-        .nullable()
-        .when('mode', ([mode], schema) =>
-            mode === 'company-seller' ? schema.required('Selecione o vendedor.') : schema,
-        ),
-    startDate: Yup.date()
-        .nullable()
-        .when('mode', ([mode], schema) => (mode === 'period' ? schema.required('Informe a data inicial.') : schema)),
-    endDate: Yup.date()
-        .nullable()
-        .when(['mode', 'startDate'], ([mode, startDate], schema) => {
-            if (mode !== 'period') return schema;
-            const required = schema.required('Informe a data final.');
-            return startDate ? required.min(startDate, 'A data final deve ser depois da inicial.') : required;
-        }),
-});
-
-function toFilter({ mode, company, seller, startDate, endDate }: FilterFields): ContractFilter {
+function toFilter({ mode, company, seller, startDate, endDate }: ContractFilterFields): ContractFilter {
     if (mode === 'company-seller') {
         return {
             kind: mode,
@@ -80,21 +47,23 @@ interface ContractFilterDialogProps {
 
 export default function ContractFilterDialog({ visible, onHide, onApply }: ContractFilterDialogProps) {
     const titleId = useId();
-    const formik = useFormik<FilterFields>({
-        initialValues: { mode: 'company-seller', company: null, seller: null, startDate: null, endDate: null },
-        validationSchema,
-        onSubmit: (fields) => {
-            onApply(toFilter(fields));
-            onHide();
-        },
+    const form = useForm<ContractFilterFields>({
+        resolver: zodResolver(contractFilterSchema),
+        // Errors show up after leaving the field or trying to apply, not while picking for the first time.
+        mode: 'onTouched',
+        defaultValues: { mode: 'company-seller', company: null, seller: null, startDate: null, endDate: null },
     });
+    const { control, formState } = form;
 
-    const isPeriod = formik.values.mode === 'period';
-    const error = (name: keyof FilterFields) => fieldError(formik, name);
-    const describedBy = (name: keyof FilterFields, id: string) => ({
-        invalid: !!error(name),
-        'aria-describedby': error(name) ? `${id}-error` : undefined,
-    });
+    const onSubmit = (fields: ContractFilterFields) => {
+        onApply(toFilter(fields));
+        onHide();
+    };
+
+    const mode = form.watch('mode');
+    const startDate = form.watch('startDate');
+    const isPeriod = mode === 'period';
+    const error = (name: keyof ContractFilterFields) => formState.errors[name]?.message;
 
     const companyField = (
         <FormField
@@ -104,32 +73,44 @@ export default function ContractFilterDialog({ visible, onHide, onApply }: Contr
             icon={<BuildingIcon />}
             error={error('company')}
         >
-            <CompanyPicker
-                inputId="filter-company"
-                value={formik.values.company}
-                onChange={(company) => formik.setFieldValue('company', company)}
-                onBlur={() => formik.setFieldTouched('company', true)}
-                {...describedBy('company', 'filter-company')}
+            <Controller
+                control={control}
+                name="company"
+                render={({ field }) => (
+                    <CompanyPicker
+                        inputId="filter-company"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        {...invalidProps(error('company'), 'filter-company')}
+                    />
+                )}
             />
         </FormField>
     );
 
     const sellerField = (
         <FormField id="filter-seller" label="Vendedor" required={!isPeriod} icon={<UserIcon />} error={error('seller')}>
-            <SellerPicker
-                inputId="filter-seller"
-                value={formik.values.seller}
-                onChange={(seller) => formik.setFieldValue('seller', seller)}
-                onBlur={() => formik.setFieldTouched('seller', true)}
-                showClear={isPeriod}
-                {...describedBy('seller', 'filter-seller')}
+            <Controller
+                control={control}
+                name="seller"
+                render={({ field }) => (
+                    <SellerPicker
+                        inputId="filter-seller"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        showClear={isPeriod}
+                        {...invalidProps(error('seller'), 'filter-seller')}
+                    />
+                )}
             />
         </FormField>
     );
 
     return (
         <Modal visible={visible} onHide={onHide} labelledBy={titleId}>
-            <form onSubmit={formik.handleSubmit} noValidate>
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
                 <ModalHeader
                     id={titleId}
                     title="Filtrar contratos"
@@ -140,11 +121,9 @@ export default function ContractFilterDialog({ visible, onHide, onApply }: Contr
                 <ModalBody>
                     <SegmentedControl<Mode>
                         aria-label="Tipo de filtro"
-                        value={formik.values.mode}
-                        onChange={(mode) => {
-                            formik.setFieldValue('mode', mode);
-                            formik.setTouched({});
-                        }}
+                        value={mode}
+                        // Switching modes starts the new fields without errors.
+                        onChange={(mode) => form.reset({ ...form.getValues(), mode })}
                         options={[
                             { value: 'company-seller', label: 'Empresa e vendedor' },
                             { value: 'period', label: 'Período' },
@@ -161,14 +140,21 @@ export default function ContractFilterDialog({ visible, onHide, onApply }: Contr
                                     icon={<CalendarIcon />}
                                     error={error('startDate')}
                                 >
-                                    <Calendar
-                                        inputId="filter-startDate"
-                                        value={formik.values.startDate}
-                                        onChange={(e) => formik.setFieldValue('startDate', e.value ?? null)}
-                                        dateFormat="dd/mm/yy"
-                                        locale="pt-BR"
-                                        placeholder="dd/mm/aaaa"
-                                        {...describedBy('startDate', 'filter-startDate')}
+                                    <Controller
+                                        control={control}
+                                        name="startDate"
+                                        render={({ field }) => (
+                                            <Calendar
+                                                inputId="filter-startDate"
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(e.value ?? null)}
+                                                onBlur={field.onBlur}
+                                                dateFormat="dd/mm/yy"
+                                                locale="pt-BR"
+                                                placeholder="dd/mm/aaaa"
+                                                {...invalidProps(error('startDate'), 'filter-startDate')}
+                                            />
+                                        )}
                                     />
                                 </FormField>
                                 <FormField
@@ -178,15 +164,22 @@ export default function ContractFilterDialog({ visible, onHide, onApply }: Contr
                                     icon={<CalendarIcon />}
                                     error={error('endDate')}
                                 >
-                                    <Calendar
-                                        inputId="filter-endDate"
-                                        value={formik.values.endDate}
-                                        onChange={(e) => formik.setFieldValue('endDate', e.value ?? null)}
-                                        dateFormat="dd/mm/yy"
-                                        locale="pt-BR"
-                                        placeholder="dd/mm/aaaa"
-                                        minDate={formik.values.startDate ?? undefined}
-                                        {...describedBy('endDate', 'filter-endDate')}
+                                    <Controller
+                                        control={control}
+                                        name="endDate"
+                                        render={({ field }) => (
+                                            <Calendar
+                                                inputId="filter-endDate"
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(e.value ?? null)}
+                                                onBlur={field.onBlur}
+                                                dateFormat="dd/mm/yy"
+                                                locale="pt-BR"
+                                                placeholder="dd/mm/aaaa"
+                                                minDate={startDate ?? undefined}
+                                                {...invalidProps(error('endDate'), 'filter-endDate')}
+                                            />
+                                        )}
                                     />
                                 </FormField>
                             </>

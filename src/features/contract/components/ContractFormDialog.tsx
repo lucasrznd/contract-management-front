@@ -1,6 +1,6 @@
 import { useEffect, useId } from 'react';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { Controller, useForm, type ControllerRenderProps } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -32,29 +32,10 @@ import { useCompanyFindAll } from '@/features/company/service/company.service';
 import { useSellerFindAll } from '@/features/seller/service/seller.service';
 import { formatCode, parseDate, parseMoney } from '@/shared/helpers/stringUtils.helper';
 import { errorMessageFormatter } from '@/shared/helpers/messageFormatter.helper';
-import { fieldError } from '@/shared/helpers/formik.helper';
+import { invalidProps, textFieldProps } from '@/shared/helpers/form.helper';
+import { contractFormSchema, type ContractFormData, type ContractFormFields } from '../schema/ContractFormSchema';
 import '@/shared/config/locale';
-import type { Company } from '@/features/company/types/company.types';
 import type { Contract, ContractFormValues, PaymentMethod } from '../types/contract.types';
-import type { Seller } from '@/features/seller/types/seller.types';
-
-interface ContractFields {
-    clientCompany: Company | null;
-    seller: Seller | null;
-    advertisingOrder: string;
-    quantitySpotDay: number | null;
-    spotDuration: string;
-    testimonialQuantity: number | null;
-    testimonialDuration: string;
-    flashQuantity: number | null;
-    newspaperParticipation: string;
-    startDate: Date | null;
-    endDate: Date | null;
-    monthlyPrice: number | null;
-    paymentMethod: PaymentMethod | '';
-    paymentDueDay: number | null;
-    observation: string;
-}
 
 const newspaperParticipationTimes = ['5 MINUTOS', '10 MINUTOS', '15 MINUTOS'];
 const paymentMethods: { label: string; value: PaymentMethod }[] = [
@@ -62,68 +43,22 @@ const paymentMethods: { label: string; value: PaymentMethod }[] = [
     { label: 'Pix', value: 'PIX' },
 ];
 
-const requiredCount = (message: string) => Yup.number().nullable().required(message).min(0, 'Use 0 ou mais.');
-const duration = (message: string) =>
-    Yup.string()
-        .required(message)
-        .matches(/^\d\.\d\d$/, 'Use minutos e segundos, ex.: 0.30.');
+type NumberField = 'quantitySpotDay' | 'testimonialQuantity' | 'flashQuantity' | 'monthlyPrice' | 'paymentDueDay';
 
-const validationSchema = Yup.object({
-    clientCompany: Yup.object().nullable().required('Selecione a empresa.'),
-    seller: Yup.object().nullable().required('Selecione o vendedor.'),
-    advertisingOrder: Yup.string().trim().required('Informe a ordem de propaganda.'),
-    quantitySpotDay: requiredCount('Informe a quantidade de spots por dia.'),
-    spotDuration: duration('Informe o tempo do spot.'),
-    testimonialQuantity: requiredCount('Informe a quantidade de testemunhais.'),
-    testimonialDuration: duration('Informe o tempo do testemunhal.'),
-    flashQuantity: requiredCount('Informe a quantidade de flashes.'),
-    startDate: Yup.date().nullable().required('Informe a data de início.'),
-    endDate: Yup.date()
-        .nullable()
-        .required('Informe a data de término.')
-        .when('startDate', ([startDate], schema) =>
-            startDate ? schema.min(startDate, 'O término deve ser depois do início.') : schema,
-        ),
-    monthlyPrice: Yup.number().nullable().required('Informe o preço mensal.').positive('Informe o preço mensal.'),
-    paymentMethod: Yup.string().required('Selecione a forma de pagamento.'),
-    paymentDueDay: Yup.number().nullable().required('Informe o dia de vencimento.'),
-});
-
-function toFields(contract: Contract | null, companies: Company[], sellers: Seller[]): ContractFields {
-    return {
-        // The API returns names only, so the records are looked up in the loaded lists.
-        clientCompany: companies.find((c) => c.tradeName === contract?.companyTradeName) ?? null,
-        seller: sellers.find((s) => s.name === contract?.sellerName) ?? null,
-        advertisingOrder: contract?.advertisingOrder ?? '',
-        quantitySpotDay: contract?.quantitySpotDay ?? null,
-        spotDuration: contract ? Number(contract.spotDuration).toFixed(2) : '',
-        testimonialQuantity: contract?.testimonialQuantity ?? null,
-        testimonialDuration: contract ? Number(contract.testimonialDuration).toFixed(2) : '',
-        flashQuantity: contract?.flashQuantity ?? null,
-        newspaperParticipation: contract?.newspaperParticipation ?? '',
-        startDate: contract ? parseDate(contract.startDate) : null,
-        endDate: contract ? parseDate(contract.endDate) : null,
-        monthlyPrice: contract ? parseMoney(contract.monthlyPriceFmt) : null,
-        paymentMethod: contract?.paymentMethod ?? '',
-        paymentDueDay: contract?.paymentDueDay ?? null,
-        observation: contract?.observation ?? '',
-    };
-}
-
-function toPayload(fields: ContractFields, id?: number): ContractFormValues {
+function toPayload(fields: ContractFormData, id?: number): ContractFormValues {
     return {
         id,
-        clientCompany: fields.clientCompany ?? undefined,
-        seller: fields.seller ?? '',
+        clientCompany: fields.clientCompany,
+        seller: fields.seller,
         advertisingOrder: fields.advertisingOrder.trim(),
         quantitySpotDay: fields.quantitySpotDay,
         spotDuration: fields.spotDuration,
         testimonialQuantity: fields.testimonialQuantity,
         testimonialDuration: fields.testimonialDuration,
         flashQuantity: fields.flashQuantity,
-        newspaperParticipation: fields.newspaperParticipation ?? '',
-        startDate: fields.startDate ?? undefined,
-        endDate: fields.endDate ?? undefined,
+        newspaperParticipation: fields.newspaperParticipation,
+        startDate: fields.startDate,
+        endDate: fields.endDate,
         monthlyPrice: fields.monthlyPrice,
         paymentMethod: fields.paymentMethod,
         paymentDueDay: fields.paymentDueDay,
@@ -150,60 +85,78 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
     const sellers = Array.isArray(sellersData) ? sellersData : [];
     const isEditing = contract !== null;
 
-    const formik = useFormik<ContractFields>({
-        initialValues: toFields(contract, companies, sellers),
-        validationSchema,
-        onSubmit: async (fields) => {
-            try {
-                if (isEditing) {
-                    await updateContract.mutateAsync(toPayload(fields, contract.id));
-                    toast.success('Alterações salvas');
-                } else {
-                    await createContract.mutateAsync(toPayload(fields));
-                    toast.success('Contrato cadastrado');
-                }
-                onHide();
-            } catch (err) {
-                const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
-                toast.error(apiMessage ?? 'Não foi possível salvar o contrato.');
-            }
+    const form = useForm<ContractFormFields, unknown, ContractFormData>({
+        resolver: zodResolver(contractFormSchema),
+        // Errors show up after leaving the field or trying to save, not while typing for the first time.
+        mode: 'onTouched',
+        defaultValues: {
+            // The API returns names only, so the records are looked up in the loaded lists.
+            clientCompany: companies.find((c) => c.tradeName === contract?.companyTradeName) ?? null,
+            seller: sellers.find((s) => s.name === contract?.sellerName) ?? null,
+            advertisingOrder: contract?.advertisingOrder ?? '',
+            quantitySpotDay: contract?.quantitySpotDay ?? null,
+            spotDuration: contract ? Number(contract.spotDuration).toFixed(2) : '',
+            testimonialQuantity: contract?.testimonialQuantity ?? null,
+            testimonialDuration: contract ? Number(contract.testimonialDuration).toFixed(2) : '',
+            flashQuantity: contract?.flashQuantity ?? null,
+            newspaperParticipation: contract?.newspaperParticipation ?? '',
+            startDate: contract ? parseDate(contract.startDate) : null,
+            endDate: contract ? parseDate(contract.endDate) : null,
+            monthlyPrice: contract ? parseMoney(contract.monthlyPriceFmt) : null,
+            paymentMethod: contract?.paymentMethod ?? '',
+            paymentDueDay: contract?.paymentDueDay ?? null,
+            observation: contract?.observation ?? '',
         },
     });
+    const { control, formState, getValues, setValue } = form;
+    const { errors, isSubmitting } = formState;
+
+    const onSubmit = async (fields: ContractFormData) => {
+        try {
+            if (isEditing) {
+                await updateContract.mutateAsync(toPayload(fields, contract.id));
+                toast.success('Alterações salvas');
+            } else {
+                await createContract.mutateAsync(toPayload(fields));
+                toast.success('Contrato cadastrado');
+            }
+            onHide();
+        } catch (err) {
+            const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
+            toast.error(apiMessage ?? 'Não foi possível salvar o contrato.');
+        }
+    };
 
     // When editing before the company/seller lists have loaded, fill them in once they arrive.
-    const { setFieldValue, values } = formik;
     useEffect(() => {
         if (!contract) return;
-        if (!values.clientCompany && companies.length) {
+        if (!getValues('clientCompany') && companies.length) {
             const company = companies.find((c) => c.tradeName === contract.companyTradeName);
-            if (company) setFieldValue('clientCompany', company);
+            if (company) setValue('clientCompany', company);
         }
-        if (!values.seller && sellers.length) {
+        if (!getValues('seller') && sellers.length) {
             const seller = sellers.find((s) => s.name === contract.sellerName);
-            if (seller) setFieldValue('seller', seller);
+            if (seller) setValue('seller', seller);
         }
         // Only reacts to the lists arriving.
     }, [companies.length, sellers.length]);
 
-    const error = (name: keyof ContractFields) => fieldError(formik, name);
-    const invalidProps = (name: keyof ContractFields, id: string) => ({
-        invalid: !!error(name),
-        'aria-invalid': !!error(name),
-        'aria-describedby': error(name) ? `${id}-error` : undefined,
-    });
-    const numberProps = (name: keyof ContractFields, id: string) => ({
+    const startDate = form.watch('startDate');
+    const error = (name: keyof ContractFormFields) => errors[name]?.message;
+    const numberProps = (field: ControllerRenderProps<ContractFormFields, NumberField>, id: string) => ({
         inputId: id,
-        name,
-        value: formik.values[name] as number | null,
-        onValueChange: (e: { value?: number | null }) => formik.setFieldValue(name, e.value ?? null),
-        onBlur: () => formik.setFieldTouched(name, true),
+        inputRef: field.ref,
+        name: field.name,
+        value: field.value,
+        onValueChange: (e: { value?: number | null }) => field.onChange(e.value ?? null),
+        onBlur: field.onBlur,
         useGrouping: false,
-        ...invalidProps(name, id),
+        ...invalidProps(error(field.name), id),
     });
 
     return (
         <Modal visible={visible} onHide={onHide} labelledBy={titleId} width={760} position="center">
-            <form onSubmit={formik.handleSubmit} noValidate>
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
                 <ModalHeader
                     id={titleId}
                     title={isEditing ? 'Editar contrato' : 'Novo contrato'}
@@ -221,12 +174,18 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<BuildingIcon />}
                                 error={error('clientCompany')}
                             >
-                                <CompanyPicker
-                                    inputId="contract-company"
-                                    value={formik.values.clientCompany}
-                                    onChange={(company) => formik.setFieldValue('clientCompany', company)}
-                                    onBlur={() => formik.setFieldTouched('clientCompany', true)}
-                                    {...invalidProps('clientCompany', 'contract-company')}
+                                <Controller
+                                    control={control}
+                                    name="clientCompany"
+                                    render={({ field }) => (
+                                        <CompanyPicker
+                                            inputId="contract-company"
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            {...invalidProps(error('clientCompany'), 'contract-company')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -236,12 +195,18 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<UserIcon />}
                                 error={error('seller')}
                             >
-                                <SellerPicker
-                                    inputId="contract-seller"
-                                    value={formik.values.seller}
-                                    onChange={(seller) => formik.setFieldValue('seller', seller)}
-                                    onBlur={() => formik.setFieldTouched('seller', true)}
-                                    {...invalidProps('seller', 'contract-seller')}
+                                <Controller
+                                    control={control}
+                                    name="seller"
+                                    render={({ field }) => (
+                                        <SellerPicker
+                                            inputId="contract-seller"
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            {...invalidProps(error('seller'), 'contract-seller')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -251,14 +216,7 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<FlagIcon />}
                                 error={error('advertisingOrder')}
                             >
-                                <InputText
-                                    id="contract-advertisingOrder"
-                                    name="advertisingOrder"
-                                    value={formik.values.advertisingOrder}
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    {...invalidProps('advertisingOrder', 'contract-advertisingOrder')}
-                                />
+                                <InputText {...textFieldProps(form, 'advertisingOrder', 'contract-advertisingOrder')} />
                             </FormField>
                         </FormGrid>
                     </FormSection>
@@ -272,10 +230,16 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<RadioIcon />}
                                 error={error('quantitySpotDay')}
                             >
-                                <InputNumber
-                                    {...numberProps('quantitySpotDay', 'contract-quantitySpotDay')}
-                                    min={0}
-                                    max={100}
+                                <Controller
+                                    control={control}
+                                    name="quantitySpotDay"
+                                    render={({ field }) => (
+                                        <InputNumber
+                                            {...numberProps(field, 'contract-quantitySpotDay')}
+                                            min={0}
+                                            max={100}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -286,15 +250,21 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 error={error('spotDuration')}
                                 hint="Minutos e segundos, ex.: 0.30."
                             >
-                                <InputMask
-                                    id="contract-spotDuration"
+                                <Controller
+                                    control={control}
                                     name="spotDuration"
-                                    value={formik.values.spotDuration}
-                                    onChange={(e) => formik.setFieldValue('spotDuration', e.value ?? '')}
-                                    onBlur={formik.handleBlur}
-                                    mask="9.99"
-                                    placeholder="0.30"
-                                    {...invalidProps('spotDuration', 'contract-spotDuration')}
+                                    render={({ field }) => (
+                                        <InputMask
+                                            id="contract-spotDuration"
+                                            name={field.name}
+                                            value={field.value}
+                                            onChange={(e) => field.onChange(e.value ?? '')}
+                                            onBlur={field.onBlur}
+                                            mask="9.99"
+                                            placeholder="0.30"
+                                            {...invalidProps(error('spotDuration'), 'contract-spotDuration')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -304,10 +274,16 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<MegaphoneIcon />}
                                 error={error('testimonialQuantity')}
                             >
-                                <InputNumber
-                                    {...numberProps('testimonialQuantity', 'contract-testimonialQuantity')}
-                                    min={0}
-                                    max={100}
+                                <Controller
+                                    control={control}
+                                    name="testimonialQuantity"
+                                    render={({ field }) => (
+                                        <InputNumber
+                                            {...numberProps(field, 'contract-testimonialQuantity')}
+                                            min={0}
+                                            max={100}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -318,15 +294,24 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 error={error('testimonialDuration')}
                                 hint="Minutos e segundos, ex.: 1.00."
                             >
-                                <InputMask
-                                    id="contract-testimonialDuration"
+                                <Controller
+                                    control={control}
                                     name="testimonialDuration"
-                                    value={formik.values.testimonialDuration}
-                                    onChange={(e) => formik.setFieldValue('testimonialDuration', e.value ?? '')}
-                                    onBlur={formik.handleBlur}
-                                    mask="9.99"
-                                    placeholder="0.30"
-                                    {...invalidProps('testimonialDuration', 'contract-testimonialDuration')}
+                                    render={({ field }) => (
+                                        <InputMask
+                                            id="contract-testimonialDuration"
+                                            name={field.name}
+                                            value={field.value}
+                                            onChange={(e) => field.onChange(e.value ?? '')}
+                                            onBlur={field.onBlur}
+                                            mask="9.99"
+                                            placeholder="0.30"
+                                            {...invalidProps(
+                                                error('testimonialDuration'),
+                                                'contract-testimonialDuration',
+                                            )}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -336,10 +321,16 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<HashIcon />}
                                 error={error('flashQuantity')}
                             >
-                                <InputNumber
-                                    {...numberProps('flashQuantity', 'contract-flashQuantity')}
-                                    min={0}
-                                    max={10}
+                                <Controller
+                                    control={control}
+                                    name="flashQuantity"
+                                    render={({ field }) => (
+                                        <InputNumber
+                                            {...numberProps(field, 'contract-flashQuantity')}
+                                            min={0}
+                                            max={10}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -347,13 +338,19 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 label="Participação no jornal"
                                 icon={<RadioIcon />}
                             >
-                                <Dropdown
-                                    inputId="contract-newspaperParticipation"
-                                    value={formik.values.newspaperParticipation || null}
-                                    options={newspaperParticipationTimes}
-                                    showClear
-                                    placeholder="Não participa"
-                                    onChange={(e) => formik.setFieldValue('newspaperParticipation', e.value ?? '')}
+                                <Controller
+                                    control={control}
+                                    name="newspaperParticipation"
+                                    render={({ field }) => (
+                                        <Dropdown
+                                            inputId="contract-newspaperParticipation"
+                                            value={field.value || null}
+                                            options={newspaperParticipationTimes}
+                                            showClear
+                                            placeholder="Não participa"
+                                            onChange={(e) => field.onChange(e.value ?? '')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                         </FormGrid>
@@ -368,15 +365,21 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<CalendarIcon />}
                                 error={error('startDate')}
                             >
-                                <Calendar
-                                    inputId="contract-startDate"
-                                    value={formik.values.startDate}
-                                    onChange={(e) => formik.setFieldValue('startDate', e.value ?? null)}
-                                    onBlur={() => formik.setFieldTouched('startDate', true)}
-                                    dateFormat="dd/mm/yy"
-                                    locale="pt-BR"
-                                    placeholder="dd/mm/aaaa"
-                                    {...invalidProps('startDate', 'contract-startDate')}
+                                <Controller
+                                    control={control}
+                                    name="startDate"
+                                    render={({ field }) => (
+                                        <Calendar
+                                            inputId="contract-startDate"
+                                            value={field.value}
+                                            onChange={(e) => field.onChange(e.value ?? null)}
+                                            onBlur={field.onBlur}
+                                            dateFormat="dd/mm/yy"
+                                            locale="pt-BR"
+                                            placeholder="dd/mm/aaaa"
+                                            {...invalidProps(error('startDate'), 'contract-startDate')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -386,16 +389,22 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<CalendarIcon />}
                                 error={error('endDate')}
                             >
-                                <Calendar
-                                    inputId="contract-endDate"
-                                    value={formik.values.endDate}
-                                    onChange={(e) => formik.setFieldValue('endDate', e.value ?? null)}
-                                    onBlur={() => formik.setFieldTouched('endDate', true)}
-                                    dateFormat="dd/mm/yy"
-                                    locale="pt-BR"
-                                    placeholder="dd/mm/aaaa"
-                                    minDate={formik.values.startDate ?? undefined}
-                                    {...invalidProps('endDate', 'contract-endDate')}
+                                <Controller
+                                    control={control}
+                                    name="endDate"
+                                    render={({ field }) => (
+                                        <Calendar
+                                            inputId="contract-endDate"
+                                            value={field.value}
+                                            onChange={(e) => field.onChange(e.value ?? null)}
+                                            onBlur={field.onBlur}
+                                            dateFormat="dd/mm/yy"
+                                            locale="pt-BR"
+                                            placeholder="dd/mm/aaaa"
+                                            minDate={startDate ?? undefined}
+                                            {...invalidProps(error('endDate'), 'contract-endDate')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -405,13 +414,19 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<MoneyIcon />}
                                 error={error('monthlyPrice')}
                             >
-                                <InputNumber
-                                    {...numberProps('monthlyPrice', 'contract-monthlyPrice')}
-                                    useGrouping
-                                    mode="currency"
-                                    currency="BRL"
-                                    locale="pt-BR"
-                                    placeholder="R$ 500,00"
+                                <Controller
+                                    control={control}
+                                    name="monthlyPrice"
+                                    render={({ field }) => (
+                                        <InputNumber
+                                            {...numberProps(field, 'contract-monthlyPrice')}
+                                            useGrouping
+                                            mode="currency"
+                                            currency="BRL"
+                                            locale="pt-BR"
+                                            placeholder="R$ 500,00"
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -421,14 +436,20 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<WalletIcon />}
                                 error={error('paymentMethod')}
                             >
-                                <Dropdown
-                                    inputId="contract-paymentMethod"
-                                    value={formik.values.paymentMethod || null}
-                                    options={paymentMethods}
-                                    placeholder="Selecione"
-                                    onChange={(e) => formik.setFieldValue('paymentMethod', e.value ?? '')}
-                                    onBlur={() => formik.setFieldTouched('paymentMethod', true)}
-                                    {...invalidProps('paymentMethod', 'contract-paymentMethod')}
+                                <Controller
+                                    control={control}
+                                    name="paymentMethod"
+                                    render={({ field }) => (
+                                        <Dropdown
+                                            inputId="contract-paymentMethod"
+                                            value={field.value || null}
+                                            options={paymentMethods}
+                                            placeholder="Selecione"
+                                            onChange={(e) => field.onChange(e.value ?? '')}
+                                            onBlur={field.onBlur}
+                                            {...invalidProps(error('paymentMethod'), 'contract-paymentMethod')}
+                                        />
+                                    )}
                                 />
                             </FormField>
                             <FormField
@@ -438,11 +459,17 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                                 icon={<CalendarIcon />}
                                 error={error('paymentDueDay')}
                             >
-                                <InputNumber
-                                    {...numberProps('paymentDueDay', 'contract-paymentDueDay')}
-                                    min={1}
-                                    max={31}
-                                    placeholder="10"
+                                <Controller
+                                    control={control}
+                                    name="paymentDueDay"
+                                    render={({ field }) => (
+                                        <InputNumber
+                                            {...numberProps(field, 'contract-paymentDueDay')}
+                                            min={1}
+                                            max={31}
+                                            placeholder="10"
+                                        />
+                                    )}
                                 />
                             </FormField>
                         </FormGrid>
@@ -453,9 +480,7 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                             <FormField id="contract-observation" label="Observação">
                                 <InputTextarea
                                     id="contract-observation"
-                                    name="observation"
-                                    value={formik.values.observation}
-                                    onChange={formik.handleChange}
+                                    {...form.register('observation')}
                                     autoResize
                                     rows={3}
                                     placeholder="Opcional"
@@ -470,7 +495,7 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                     <Button
                         type="submit"
                         label={isEditing ? 'Salvar alterações' : 'Cadastrar contrato'}
-                        loading={formik.isSubmitting}
+                        loading={isSubmitting}
                     />
                 </ModalFooter>
             </form>
