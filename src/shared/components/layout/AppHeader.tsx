@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router';
 import logo from '@/assets/images/logo-header.png';
 import { BuildingIcon, FolderIcon, UsersIcon, type IconProps } from '@/shared/components/icons';
 import styles from './AppHeader.module.css';

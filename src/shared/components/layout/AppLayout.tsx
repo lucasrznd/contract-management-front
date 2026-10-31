@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import AppHeader from './AppHeader';
 import AppFooter from '@/shared/components/footer/AppFooter';

@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BrowserRouter, Navigate, useRoutes, type RouteObject } from 'react-router-dom';
+import { BrowserRouter, Navigate, useRoutes, type RouteObject } from 'react-router';
 import AppLayout from '@/shared/components/layout/AppLayout';
 
 // Each page becomes its own chunk, downloaded the first time its route is visited.
@@ -27,8 +27,8 @@ export function AppRouteTree() {
 
 const AppRoutes = () => {
     return (
-        // startTransition keeps the current page on screen while the next page's chunk downloads.
-        <BrowserRouter future={{ v7_startTransition: true }}>
+        // Navigations run inside startTransition (default in v7), keeping the current page on screen while the next page's chunk downloads.
+        <BrowserRouter>
             <AppRouteTree />
         </BrowserRouter>
     );
