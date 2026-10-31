@@ -1,11 +1,11 @@
 import { Helmet } from 'react-helmet-async';
-import CompanyDatatable from '../components/company/CompanyDatatable';
-import CompanyFormDialog from '../components/company/CompanyFormDialog';
-import DeleteDialog from '../components/dialog/DeleteDialog';
-import { useToast } from '../components/ui/toast/ToastProvider';
-import { useCompanyDelete } from '../hooks/company/useCompanyDelete';
-import { useDialogState } from '../hooks/useDialogState';
-import type { Company } from '../types';
+import CompanyDatatable from '@/features/company/components/CompanyDatatable';
+import CompanyFormDialog from '@/features/company/components/CompanyFormDialog';
+import DeleteDialog from '@/shared/components/dialog/DeleteDialog';
+import { useToast } from '@/shared/components/ui/toast/ToastProvider';
+import { useCompanyDelete } from '@/features/company/service/company.service';
+import { useDialogState } from '@/shared/hooks/useDialogState';
+import type { Company } from '@/features/company/types/company.types';
 
 export default function CompanyPage() {
     const toast = useToast();

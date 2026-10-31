@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import { BrowserRouter, Navigate, useRoutes, type RouteObject } from 'react-router-dom';
-import AppLayout from '../components/layout/AppLayout';
+import AppLayout from '@/shared/components/layout/AppLayout';
 
 // Each page becomes its own chunk, downloaded the first time its route is visited.
 const HomePage = lazy(() => import('../pages/Home'));

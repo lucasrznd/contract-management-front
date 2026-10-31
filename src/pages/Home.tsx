@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import HomeBody from '../components/home/HomeBody';
+import HomeBody from '@/features/home/components/HomeBody';
 
 export default function HomePage() {
     return (
