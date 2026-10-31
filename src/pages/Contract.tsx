@@ -38,13 +38,15 @@ export default function ContractPage() {
 
     const confirmDelete = () => {
         if (!deletion.item) return;
-        deleteContract.mutate(deletion.item.id, {
-            onSuccess: () => {
-                deletion.close();
-                toast.success('Contrato excluído');
+        deleteContract.mutate(
+            { id: deletion.item.id },
+            {
+                onSuccess: () => {
+                    deletion.close();
+                    toast.success('Contrato excluído');
+                },
             },
-            onError: () => toast.error('Não foi possível excluir o contrato.'),
-        });
+        );
     };
 
     return (

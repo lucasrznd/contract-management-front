@@ -1,7 +1,6 @@
 import { useEffect, useId } from 'react';
 import { Controller, useForm, type ControllerRenderProps } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isAxiosError } from 'axios';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputMask } from 'primereact/inputmask';
@@ -27,11 +26,10 @@ import {
     UserIcon,
     WalletIcon,
 } from '@/shared/components/icons';
-import { useContractPost, useContractPut } from '../service/contract.service';
+import { useContractCreate, useContractUpdate } from '../service/contract.service';
 import { useCompanyFindAll } from '@/features/company/service/company.service';
 import { useSellerFindAll } from '@/features/seller/service/seller.service';
 import { formatCode, parseDate, parseMoney } from '@/shared/helpers/stringUtils.helper';
-import { errorMessageFormatter } from '@/shared/helpers/messageFormatter.helper';
 import { invalidProps, textFieldProps } from '@/shared/helpers/form.helper';
 import { contractFormSchema, type ContractFormData, type ContractFormFields } from '../schema/ContractFormSchema';
 import '@/shared/config/locale';
@@ -77,8 +75,8 @@ interface ContractFormDialogProps {
 export default function ContractFormDialog({ visible, onHide, contract }: ContractFormDialogProps) {
     const titleId = useId();
     const toast = useToast();
-    const createContract = useContractPost();
-    const updateContract = useContractPut();
+    const { mutate: createContract, isPending: isCreating } = useContractCreate();
+    const { mutate: updateContract, isPending: isUpdating } = useContractUpdate();
     const { data: companiesData } = useCompanyFindAll();
     const { data: sellersData } = useSellerFindAll();
     const companies = Array.isArray(companiesData) ? companiesData : [];
@@ -109,22 +107,30 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
         },
     });
     const { control, formState, getValues, setValue } = form;
-    const { errors, isSubmitting } = formState;
+    const { errors } = formState;
 
-    const onSubmit = async (fields: ContractFormData) => {
-        try {
-            if (isEditing) {
-                await updateContract.mutateAsync(toPayload(fields, contract.id));
-                toast.success('Alterações salvas');
-            } else {
-                await createContract.mutateAsync(toPayload(fields));
-                toast.success('Contrato cadastrado');
-            }
-            onHide();
-        } catch (err) {
-            const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
-            toast.error(apiMessage ?? 'Não foi possível salvar o contrato.');
+    const onSubmit = (fields: ContractFormData) => {
+        if (isEditing) {
+            updateContract(
+                { id: contract.id, data: toPayload(fields, contract.id) },
+                {
+                    onSuccess: () => {
+                        toast.success('Alterações salvas');
+                        onHide();
+                    },
+                },
+            );
+            return;
         }
+        createContract(
+            { data: toPayload(fields) },
+            {
+                onSuccess: () => {
+                    toast.success('Contrato cadastrado');
+                    onHide();
+                },
+            },
+        );
     };
 
     // When editing before the company/seller lists have loaded, fill them in once they arrive.
@@ -495,7 +501,7 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
                     <Button
                         type="submit"
                         label={isEditing ? 'Salvar alterações' : 'Cadastrar contrato'}
-                        loading={isSubmitting}
+                        loading={isCreating || isUpdating}
                     />
                 </ModalFooter>
             </form>

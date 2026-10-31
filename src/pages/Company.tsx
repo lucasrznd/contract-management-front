@@ -15,13 +15,15 @@ export default function CompanyPage() {
 
     const confirmDelete = () => {
         if (!deletion.item) return;
-        deleteCompany.mutate(deletion.item.id, {
-            onSuccess: () => {
-                deletion.close();
-                toast.success('Empresa excluída');
+        deleteCompany.mutate(
+            { id: deletion.item.id },
+            {
+                onSuccess: () => {
+                    deletion.close();
+                    toast.success('Empresa excluída');
+                },
             },
-            onError: () => toast.error('Não foi possível excluir a empresa.'),
-        });
+        );
     };
 
     return (

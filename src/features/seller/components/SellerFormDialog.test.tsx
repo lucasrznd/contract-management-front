@@ -65,3 +65,16 @@ test('a valid form is posted with the phone digits only', async () => {
     );
     expect(await screen.findByText('Vendedor cadastrado')).toBeInTheDocument();
 });
+
+test('a failed save shows a toast and keeps the dialog open', async () => {
+    vi.spyOn(api, 'post').mockRejectedValue(new Error('Request failed'));
+    const onHide = vi.fn();
+    renderWithProviders(<SellerFormDialog visible seller={null} onHide={onHide} />);
+
+    await userEvent.type(await screen.findByLabelText(/Nome/), 'Ana Paula');
+    await userEvent.type(screen.getByLabelText(/Telefone/), '19993818293');
+    await userEvent.click(screen.getByRole('button', { name: 'Cadastrar vendedor' }));
+
+    expect(await screen.findByText('Não foi possível cadastrar o vendedor.')).toBeInTheDocument();
+    expect(onHide).not.toHaveBeenCalled();
+});

@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
+import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
 import type { Company, CompanyFormValues } from '../types/company.types';
 
 const companyKeys = {
@@ -17,34 +17,41 @@ const count = async () => {
     return response.data;
 };
 
-const create = async (data: CompanyFormValues) => {
+const create = async ({ data }: { data: CompanyFormValues }) => {
     const response = await api.post<Company>('/companies', data);
     return response.data;
 };
 
-const update = (data: CompanyFormValues) => api.put(`/companies/${data.id}`, data);
+const update = ({ id, data }: { id: number; data: CompanyFormValues }) => api.put(`/companies/${id}`, data);
 
-const remove = (id: number) => api.delete(`/companies/${id}`);
+const remove = ({ id }: { id: number }) => api.delete(`/companies/${id}`);
 
 export function useCompanyFindAll() {
-    return useQuery({ queryKey: companyKeys.all, queryFn: findAll, refetchInterval: REFETCH_INTERVAL });
+    return useApiQuery({
+        queryKey: companyKeys.all,
+        queryFn: findAll,
+        refetchInterval: REFETCH_INTERVAL,
+        errorMessage: 'Não foi possível carregar as empresas.',
+    });
 }
 
 export function useCompanyCount() {
-    return useQuery({ queryKey: companyKeys.count, queryFn: count, refetchInterval: REFETCH_INTERVAL });
+    return useApiQuery({
+        queryKey: companyKeys.count,
+        queryFn: count,
+        refetchInterval: REFETCH_INTERVAL,
+        errorMessage: 'Não foi possível carregar o total de empresas.',
+    });
 }
 
-export function useCompanyPost() {
-    const queryClient = useQueryClient();
-    return useMutation({ mutationFn: create, onSuccess: () => queryClient.invalidateQueries() });
+export function useCompanyCreate() {
+    return useApiMutation({ mutationFn: create, errorMessage: 'Não foi possível cadastrar a empresa.' });
 }
 
-export function useCompanyPut() {
-    const queryClient = useQueryClient();
-    return useMutation({ mutationFn: update, onSuccess: () => queryClient.invalidateQueries() });
+export function useCompanyUpdate() {
+    return useApiMutation({ mutationFn: update, errorMessage: 'Não foi possível salvar as alterações da empresa.' });
 }
 
 export function useCompanyDelete() {
-    const queryClient = useQueryClient();
-    return useMutation({ mutationFn: remove, onSuccess: () => queryClient.invalidateQueries() });
+    return useApiMutation({ mutationFn: remove, errorMessage: 'Não foi possível excluir a empresa.' });
 }

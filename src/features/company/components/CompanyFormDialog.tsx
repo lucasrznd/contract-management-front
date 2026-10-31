@@ -1,7 +1,6 @@
 import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isAxiosError } from 'axios';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/shared/components/ui/Modal';
@@ -17,9 +16,8 @@ import {
     PhoneIcon,
     UserIcon,
 } from '@/shared/components/icons';
-import { useCompanyPost, useCompanyPut } from '../service/company.service';
+import { useCompanyCreate, useCompanyUpdate } from '../service/company.service';
 import { formatCode, maskCnpj, maskCpf, maskPhone, maskZipCode, onlyDigits } from '@/shared/helpers/stringUtils.helper';
-import { errorMessageFormatter } from '@/shared/helpers/messageFormatter.helper';
 import { fetchAddressByZipCode } from '@/shared/api/viaCep.service';
 import { textFieldProps } from '@/shared/helpers/form.helper';
 import { companyFormSchema, type CompanyFormFields } from '../schema/CompanyFormSchema';
@@ -55,8 +53,8 @@ interface CompanyFormDialogProps {
 export default function CompanyFormDialog({ visible, onHide, company }: CompanyFormDialogProps) {
     const titleId = useId();
     const toast = useToast();
-    const createCompany = useCompanyPost();
-    const updateCompany = useCompanyPut();
+    const { mutate: createCompany, isPending: isCreating } = useCompanyCreate();
+    const { mutate: updateCompany, isPending: isUpdating } = useCompanyUpdate();
     const [zipCodeStatus, setZipCodeStatus] = useState<'idle' | 'loading' | 'not-found' | 'failed'>('idle');
     const isEditing = company !== null;
 
@@ -80,22 +78,30 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
             state: company?.state ?? '',
         },
     });
-    const { errors, isSubmitting } = form.formState;
+    const { errors } = form.formState;
 
-    const onSubmit = async (fields: CompanyFormFields) => {
-        try {
-            if (isEditing) {
-                await updateCompany.mutateAsync(toPayload(fields, company.id));
-                toast.success('Alterações salvas');
-            } else {
-                await createCompany.mutateAsync(toPayload(fields));
-                toast.success('Empresa cadastrada');
-            }
-            onHide();
-        } catch (err) {
-            const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
-            toast.error(apiMessage ?? 'Não foi possível salvar a empresa.');
+    const onSubmit = (fields: CompanyFormFields) => {
+        if (isEditing) {
+            updateCompany(
+                { id: company.id, data: toPayload(fields, company.id) },
+                {
+                    onSuccess: () => {
+                        toast.success('Alterações salvas');
+                        onHide();
+                    },
+                },
+            );
+            return;
         }
+        createCompany(
+            { data: toPayload(fields) },
+            {
+                onSuccess: () => {
+                    toast.success('Empresa cadastrada');
+                    onHide();
+                },
+            },
+        );
     };
 
     const field = (name: keyof CompanyFormFields, options?: Parameters<typeof textFieldProps>[3]) =>
@@ -304,7 +310,7 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                     <Button
                         type="submit"
                         label={isEditing ? 'Salvar alterações' : 'Cadastrar empresa'}
-                        loading={isSubmitting}
+                        loading={isCreating || isUpdating}
                     />
                 </ModalFooter>
             </form>

@@ -15,13 +15,15 @@ export default function SellerPage() {
 
     const confirmDelete = () => {
         if (!deletion.item) return;
-        deleteSeller.mutate(deletion.item.id, {
-            onSuccess: () => {
-                deletion.close();
-                toast.success('Vendedor excluído');
+        deleteSeller.mutate(
+            { id: deletion.item.id },
+            {
+                onSuccess: () => {
+                    deletion.close();
+                    toast.success('Vendedor excluído');
+                },
             },
-            onError: () => toast.error('Não foi possível excluir o vendedor.'),
-        });
+        );
     };
 
     return (

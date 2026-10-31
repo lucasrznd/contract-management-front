@@ -14,7 +14,3 @@ export function infoMsg(toast: ToastRef, msg?: string) {
 export function warnMsg(toast: ToastRef, msg?: string) {
     toast.current?.show({ severity: 'warn', summary: 'Aviso', detail: msg, life: 5000 });
 }
-
-export function errorMsg(toast: ToastRef, msg?: string) {
-    toast.current?.show({ severity: 'error', summary: 'Erro', detail: msg, life: 5000 });
-}

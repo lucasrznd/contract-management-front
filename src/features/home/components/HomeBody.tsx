@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { errorMsg, warnMsg } from '@/shared/helpers/toastMessage.helper';
+import { warnMsg } from '@/shared/helpers/toastMessage.helper';
 import {
     useContractCount,
     useContractExpiring,
@@ -27,7 +27,6 @@ export default function HomeBody() {
         data: expiringContracts,
         isLoading: isLoadingExpiringContracts,
         isSuccess: isSucessFindExpiringContracts,
-        isError: isErrorExpiringContracts,
     } = useContractExpiring();
     const { data: lastContracts } = useContractLastFive();
     const { data: contractsCounter } = useContractCount();
@@ -39,12 +38,6 @@ export default function HomeBody() {
             warnMsg(toast, 'Contratos próximos do vencimento: ' + expiringContracts.length);
         }
     }, [isSucessFindExpiringContracts, expiringContracts]);
-
-    useEffect(() => {
-        if (isErrorExpiringContracts) {
-            errorMsg(toast, 'Erro de conexão com servidor.');
-        }
-    }, [isErrorExpiringContracts]);
 
     const showEndDate = (rowData: Contract) => {
         var daysQuantity = daysBetweenEndDate(rowData.endDate);

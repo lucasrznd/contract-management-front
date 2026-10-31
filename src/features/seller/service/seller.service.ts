@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
+import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
 import type { Seller, SellerFormValues } from '../types/seller.types';
 
 export const isSellerPhotoUploadEnabled = import.meta.env.VITE_SELLER_PHOTO_UPLOAD === 'true';
@@ -13,18 +13,18 @@ const findAll = async () => {
     return response.data;
 };
 
-const create = async (data: SellerFormValues) => {
+const create = async ({ data }: { data: SellerFormValues }) => {
     const response = await api.post<Seller>('/sellers', data);
     return response.data;
 };
 
-const update = (data: SellerFormValues) => api.put(`/sellers/${data.id}`, data);
+const update = ({ id, data }: { id: number; data: SellerFormValues }) => api.put(`/sellers/${id}`, data);
 
-const remove = (id: number) => api.delete(`/sellers/${id}`);
+const remove = ({ id }: { id: number }) => api.delete(`/sellers/${id}`);
 
 /** Uploads the photo and returns the signed URL to store in the seller's `urlImage`. */
 // TODO: confirm the endpoint and response shape once contract-management-api implements photo uploads.
-const uploadPhoto = async (file: File) => {
+const uploadPhoto = async ({ file }: { file: File }) => {
     const body = new FormData();
     body.append('file', file);
     const response = await api.post<{ url: string }>('/sellers/photo', body);
@@ -32,24 +32,30 @@ const uploadPhoto = async (file: File) => {
 };
 
 export function useSellerFindAll() {
-    return useQuery({ queryKey: sellerKeys.all, queryFn: findAll, refetchInterval: REFETCH_INTERVAL });
+    return useApiQuery({
+        queryKey: sellerKeys.all,
+        queryFn: findAll,
+        refetchInterval: REFETCH_INTERVAL,
+        errorMessage: 'Não foi possível carregar os vendedores.',
+    });
 }
 
-export function useSellerPost() {
-    const queryClient = useQueryClient();
-    return useMutation({ mutationFn: create, onSuccess: () => queryClient.invalidateQueries() });
+export function useSellerCreate() {
+    return useApiMutation({ mutationFn: create, errorMessage: 'Não foi possível cadastrar o vendedor.' });
 }
 
-export function useSellerPut() {
-    const queryClient = useQueryClient();
-    return useMutation({ mutationFn: update, onSuccess: () => queryClient.invalidateQueries() });
+export function useSellerUpdate() {
+    return useApiMutation({ mutationFn: update, errorMessage: 'Não foi possível salvar as alterações do vendedor.' });
 }
 
 export function useSellerDelete() {
-    const queryClient = useQueryClient();
-    return useMutation({ mutationFn: remove, onSuccess: () => queryClient.invalidateQueries() });
+    return useApiMutation({ mutationFn: remove, errorMessage: 'Não foi possível excluir o vendedor.' });
 }
 
 export function useSellerPhotoUpload() {
-    return useMutation({ mutationFn: uploadPhoto });
+    return useApiMutation({
+        mutationFn: uploadPhoto,
+        invalidateQueries: false,
+        errorMessage: 'Não foi possível enviar a foto do vendedor.',
+    });
 }

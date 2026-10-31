@@ -4,7 +4,7 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/shared/components/
 import StatusBadge from '@/shared/components/ui/StatusBadge';
 import { useToast } from '@/shared/components/ui/toast/ToastProvider';
 import { DownloadIcon, FileTextIcon, SignatureIcon } from '@/shared/components/icons';
-import { useFetchContractPdf } from '../service/contract.service';
+import { useContractDownloadPdf } from '../service/contract.service';
 import { formatCode } from '@/shared/helpers/stringUtils.helper';
 import type { Contract } from '../types/contract.types';
 import styles from './ContractDialogs.module.css';
@@ -37,17 +37,19 @@ function Option(props: {
 export default function GenerateContractDialog({ visible, onHide, contract }: GenerateContractDialogProps) {
     const titleId = useId();
     const toast = useToast();
-    const pdf = useFetchContractPdf();
+    const pdf = useContractDownloadPdf();
 
     const downloadPdf = () => {
         if (!contract) return;
-        pdf.mutate(contract, {
-            onSuccess: () => {
-                toast.success('PDF gerado');
-                onHide();
+        pdf.mutate(
+            { id: contract.id },
+            {
+                onSuccess: () => {
+                    toast.success('PDF gerado');
+                    onHide();
+                },
             },
-            onError: () => toast.error('Não foi possível gerar o PDF.'),
-        });
+        );
     };
 
     return (

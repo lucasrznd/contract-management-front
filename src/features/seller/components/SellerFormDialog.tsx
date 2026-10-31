@@ -1,7 +1,6 @@
 import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isAxiosError } from 'axios';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/shared/components/ui/Modal';
@@ -10,13 +9,12 @@ import { useToast } from '@/shared/components/ui/toast/ToastProvider';
 import { PhoneIcon, UserIcon } from '@/shared/components/icons';
 import SellerPhotoField from './SellerPhotoField';
 import {
-    useSellerPost,
-    useSellerPut,
+    useSellerCreate,
+    useSellerUpdate,
     isSellerPhotoUploadEnabled,
     useSellerPhotoUpload,
 } from '../service/seller.service';
 import { clearPhoneNumber, formatCode, maskPhone } from '@/shared/helpers/stringUtils.helper';
-import { errorMessageFormatter } from '@/shared/helpers/messageFormatter.helper';
 import { textFieldProps } from '@/shared/helpers/form.helper';
 import { sellerFormSchema, type SellerFormFields } from '../schema/SellerFormSchema';
 import type { Seller, SellerFormValues } from '../types/seller.types';
@@ -34,9 +32,9 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
     const titleId = useId();
     const toast = useToast();
     const [photoFile, setPhotoFile] = useState<File | null>(null);
-    const createSeller = useSellerPost();
-    const updateSeller = useSellerPut();
-    const uploadPhoto = useSellerPhotoUpload();
+    const { mutate: createSeller, isPending: isCreating } = useSellerCreate();
+    const { mutate: updateSeller, isPending: isUpdating } = useSellerUpdate();
+    const { mutate: uploadPhoto, isPending: isUploading } = useSellerPhotoUpload();
     const isEditing = seller !== null;
 
     const form = useForm<SellerFormFields>({
@@ -49,31 +47,46 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
             urlImage: seller?.urlImage ?? '',
         },
     });
-    const { errors, isSubmitting } = form.formState;
+    const { errors } = form.formState;
 
-    const onSubmit = async (values: SellerFormFields) => {
-        try {
-            const urlImage =
-                isSellerPhotoUploadEnabled && photoFile ? await uploadPhoto.mutateAsync(photoFile) : values.urlImage;
-            const data: SellerFormValues = {
-                id: seller?.id,
-                name: values.name.trim(),
-                phoneNumber: clearPhoneNumber(values.phoneNumber),
-                urlImage,
-            };
+    const save = (values: SellerFormFields, urlImage: string) => {
+        const data: SellerFormValues = {
+            id: seller?.id,
+            name: values.name.trim(),
+            phoneNumber: clearPhoneNumber(values.phoneNumber),
+            urlImage,
+        };
 
-            if (isEditing) {
-                await updateSeller.mutateAsync(data);
-                toast.success('Alterações salvas');
-            } else {
-                await createSeller.mutateAsync(data);
-                toast.success('Vendedor cadastrado');
-            }
-            onHide();
-        } catch (err) {
-            const apiMessage = isAxiosError(err) ? errorMessageFormatter(err.response?.data?.message) : undefined;
-            toast.error(apiMessage ?? 'Não foi possível salvar o vendedor.');
+        if (isEditing) {
+            updateSeller(
+                { id: seller.id, data },
+                {
+                    onSuccess: () => {
+                        toast.success('Alterações salvas');
+                        onHide();
+                    },
+                },
+            );
+            return;
         }
+        createSeller(
+            { data },
+            {
+                onSuccess: () => {
+                    toast.success('Vendedor cadastrado');
+                    onHide();
+                },
+            },
+        );
+    };
+
+    // A chosen photo is uploaded first; the seller is saved with the URL it gets back.
+    const onSubmit = (values: SellerFormFields) => {
+        if (isSellerPhotoUploadEnabled && photoFile) {
+            uploadPhoto({ file: photoFile }, { onSuccess: (url) => save(values, url) });
+            return;
+        }
+        save(values, values.urlImage);
     };
 
     const name = form.watch('name');
@@ -134,7 +147,7 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
                     <Button
                         type="submit"
                         label={isEditing ? 'Salvar alterações' : 'Cadastrar vendedor'}
-                        loading={isSubmitting}
+                        loading={isUploading || isCreating || isUpdating}
                     />
                 </ModalFooter>
             </form>
