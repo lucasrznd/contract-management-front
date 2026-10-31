@@ -162,6 +162,15 @@ input.p-inputtext {
     border-color: var(--color-danger);
 }
 
+/* Wrapped inputs get .p-invalid on the wrapper, not on the input. */
+.p-autocomplete.p-invalid > .p-inputtext,
+.p-calendar.p-invalid > .p-inputtext,
+.p-inputnumber.p-invalid > .p-inputtext,
+.p-dropdown.p-invalid,
+.p-dropdown.p-invalid:not(.p-disabled):hover {
+    border-color: var(--color-danger);
+}
+
 .p-error {
     color: var(--color-danger);
     font-size: var(--text-xs);
@@ -227,11 +236,29 @@ textarea.p-inputtext {
 .p-dropdown .p-dropdown-label {
     padding-top: 0;
     padding-bottom: 0;
+    font-size: var(--text-sm);
     line-height: calc(var(--control-height) - 2px);
+}
+
+.p-dropdown .p-dropdown-label.p-placeholder {
+    color: var(--color-gray-400);
+}
+
+.p-dropdown:not(.p-disabled):hover {
+    border-color: var(--color-gray-400);
+}
+
+.p-dropdown .p-dropdown-trigger {
+    color: var(--color-gray-500);
 }
 
 .p-dropdown .p-dropdown-trigger {
     width: var(--control-height);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+    background: var(--color-primary-soft);
+    color: var(--color-primary-hover);
 }
 
 .p-dropdown-panel,

@@ -1,0 +1,44 @@
+.price {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+button.documentButton {
+    box-shadow: none;
+}
+
+button.documentButton :global(.p-button-label) {
+    font-weight: 500;
+}
+
+button.filterButton {
+    box-shadow: none;
+}
+
+.filterBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 8px 20px;
+    border-bottom: 1px solid var(--color-gray-150);
+    background: var(--color-primary-soft);
+    color: var(--color-primary-hover);
+    font-size: 13px;
+}
+
+.filterBar strong {
+    font-weight: 600;
+}
+
+button.clearFilter {
+    margin-left: auto;
+    color: var(--color-primary-hover);
+}
+
+button.clearFilter:not(:disabled):hover {
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--color-primary-hover);
+}

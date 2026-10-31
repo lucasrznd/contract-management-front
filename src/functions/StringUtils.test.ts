@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest';
-import { formatCode, initials, maskPhone, normalizeSearch } from './StringUtils';
+import {
+    formatCode,
+    initials,
+    maskCnpj,
+    maskPhone,
+    maskZipCode,
+    normalizeSearch,
+    parseMoney,
+    toIsoDate,
+} from './StringUtils';
 
 describe('maskPhone', () => {
     test.each([
@@ -29,4 +38,24 @@ test('initials uses the first and last names', () => {
 
 test('normalizeSearch drops accents and case', () => {
     expect(normalizeSearch('Patrícia Gomes')).toBe('patricia gomes');
+});
+
+test('maskPattern masks as you type', () => {
+    expect(maskCnpj('12938192319839')).toBe('12.938.192/3198-39');
+    expect(maskCnpj('1293')).toBe('12.93');
+    expect(maskZipCode('86400000')).toBe('86400-000');
+});
+
+test.each([
+    ['R$ 1.500,00', 1500],
+    ['R$ 780,50', 780.5],
+    ['R$1500.00', 1500],
+    ['R$0.00', 0],
+    ['', null],
+])('parseMoney(%j) → %j', (input, expected) => {
+    expect(parseMoney(input)).toBe(expected);
+});
+
+test('toIsoDate keeps the local date', () => {
+    expect(toIsoDate(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05');
 });

@@ -31,6 +31,7 @@
     top: 12px;
     left: 12px;
     display: flex;
+    z-index: 1;
     color: var(--color-gray-400);
     pointer-events: none;
 }
@@ -50,4 +51,24 @@
 .hint {
     font-size: 12px;
     color: var(--color-gray-500);
+}
+
+/* Dropdown, AutoComplete, Calendar and InputNumber wrap their input; they fill the field too. */
+.control > :global(.p-component),
+.control > :global(.p-inputwrapper) {
+    width: 100%;
+}
+
+.control :global(.p-autocomplete-input),
+.control :global(.p-calendar .p-inputtext),
+.control :global(.p-inputnumber-input) {
+    width: 100%;
+}
+
+.control :global(.p-dropdown) {
+    display: flex;
+}
+
+.withIcon :global(.p-dropdown .p-dropdown-label) {
+    padding-left: 36px;
 }

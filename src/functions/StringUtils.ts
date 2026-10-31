@@ -5,32 +5,6 @@ export function clearPhoneNumber(number: string) {
     return formattedNumber;
 }
 
-export function clearRegistrationNumber(registrationNumber: string) {
-    const registrationNumberFmt = registrationNumber.replace(/[^\w\s]/gi, '');
-    return registrationNumberFmt;
-}
-
-export function formatPhoneNumberDt<K extends string>(rowData: Record<K, string>, columnName: K) {
-    const cleanNumber = rowData[columnName].replace(/\D/g, '');
-
-    if (cleanNumber.length < 10) {
-        return rowData[columnName];
-    }
-
-    const areaCode = cleanNumber.substring(0, 2);
-    const part1 = cleanNumber.substring(2, 3);
-    const part2 = cleanNumber.substring(3, 7);
-    const part3 = cleanNumber.substring(7, 11);
-
-    const formattedNumber = `(${areaCode}) ${part1} ${part2}-${part3}`;
-    return formattedNumber;
-}
-
-export function formatRegistrationNumberDt<K extends string>(rowData: Record<K, string>, columnName: K) {
-    const registrationNumberFmt = rowData[columnName].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    return registrationNumberFmt;
-}
-
 export function buildEncodedStringAddress(rowData: Pick<Company, 'streetName' | 'number' | 'avenueName' | 'zipCode'>) {
     const addressString =
         rowData.streetName + ', ' + rowData.number + ', ' + rowData.avenueName + ', ' + rowData.zipCode;
@@ -70,11 +44,6 @@ export function daysBetweenEndDate(endDate: string) {
     return Math.round((new Date(endDate).getTime() - new Date(dateNow()).getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function isValidDate(dateString: string | Date) {
-    const date = new Date(dateString);
-    return date instanceof Date && !isNaN(date.getTime());
-}
-
 export function replacePdfPath(pdfPath: string | null) {
     if (pdfPath !== null) {
         const pdfUrl = pdfPath.replace(/\\\\/g, 'http://').replace(/\\/g, '/');
@@ -112,4 +81,37 @@ export function initials(name: string) {
 /** Lowercase without accents, so "jose" matches "José". */
 export function normalizeSearch(value: string) {
     return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+/** Masks digits as you type following `pattern`, where 9 is a digit: ("12345678", "99999-999") → "12345-678". */
+export function maskPattern(value: string, pattern: string) {
+    const digits = value.replace(/\D/g, '');
+    let masked = '';
+    let next = 0;
+    for (const char of pattern) {
+        if (next >= digits.length) break;
+        masked += char === '9' ? digits[next++] : char;
+    }
+    return masked;
+}
+
+export const maskCnpj = (value: string) => maskPattern(value, '99.999.999/9999-99');
+export const maskCpf = (value: string) => maskPattern(value, '999.999.999-99');
+export const maskZipCode = (value: string) => maskPattern(value, '99999-999');
+
+export const onlyDigits = (value: string) => value.replace(/\D/g, '');
+
+/** Reads a price the API formatted as text ("R$ 1.500,00" or "R$1500.00") back into a number. */
+export function parseMoney(formatted: string) {
+    const value = formatted.replace(/[^\d,.-]/g, '');
+    const normalized = value.includes(',') ? value.replace(/\./g, '').replace(',', '.') : value;
+    const number = parseFloat(normalized);
+    return Number.isNaN(number) ? null : number;
+}
+
+/** Date → "yyyy-MM-dd" in local time (toISOString would shift it to UTC). */
+export function toIsoDate(date: Date) {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${mm}-${dd}`;
 }

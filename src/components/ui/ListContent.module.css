@@ -1,0 +1,19 @@
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 0;
+}
+
+button.clearSearch {
+    height: 36px;
+    padding: 0 14px;
+}
+
+button.clearSearch :global(.p-button-label) {
+    font-weight: 500;
+}
+
+button.clearSearch:not(:disabled):hover {
+    background: var(--color-gray-50);
+}

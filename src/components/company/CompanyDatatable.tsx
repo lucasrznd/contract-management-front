@@ -1,229 +1,170 @@
-import { Panel } from 'primereact/panel';
-import { Toolbar } from 'primereact/toolbar';
+import { useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import React, { useEffect, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
-import { IconField } from 'primereact/iconfield';
-import { InputIcon } from 'primereact/inputicon';
-import DeleteDialog from '../dialog/DeleteDialog';
-import { useCompanyDelete } from '../../hooks/company/useCompanyDelete';
-import { errorMsg, warnMsg } from '../../functions/ToastMessage';
-import { ProgressSpinner } from 'primereact/progressspinner';
+import PageCard from '../ui/PageCard';
+import SearchInput from '../ui/SearchInput';
+import ListContent from '../ui/ListContent';
+import UserAvatar from '../ui/UserAvatar';
+import { tableStyles, useDataTableState } from '../ui/dataTable';
+import { BuildingIcon, MailIcon, MapPinIcon, PencilIcon, PlusIcon, TrashIcon } from '../icons';
 import { useCompanyFindAll } from '../../hooks/company/useCompanyFindAll';
-import {
-    buildEncodedStringAddress,
-    formatPhoneNumberDt,
-    formatRegistrationNumberDt,
-} from '../../functions/StringUtils';
-import serverErrorImage from '../../assets/images/server-error.png';
-import { Toast } from 'primereact/toast';
+import { buildEncodedStringAddress, formatCode, maskCnpj, maskCpf, maskPhone } from '../../functions/StringUtils';
+import { matchesSearch } from '../../functions/search';
 import type { Company } from '../../types';
 
 interface CompanyDatatableProps {
-    startContent: React.ReactNode;
-    companyDetails: (company: Company) => void;
-    toast?: React.RefObject<Toast | null>;
+    onNew: () => void;
+    onEdit: (company: Company) => void;
+    onDelete: (company: Company) => void;
 }
 
-export default function CompanyDatatable(props: CompanyDatatableProps) {
-    const [company, setCompany] = useState<Partial<Company>>({});
-    const [globalFilter, setGlobalFilter] = useState<string | null>(null);
-    const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useCompanyFindAll();
-    const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useCompanyDelete();
-    const [deleteCompanyDialog, setDeleteCompanyDialog] = useState(false);
-    const toast = useRef<Toast>(null);
+const openOnMaps = (company: Company) =>
+    window.open(
+        'https://www.google.com/maps/search/?api=1&query=' + buildEncodedStringAddress(company),
+        '_blank',
+        'noopener',
+    );
 
-    useEffect(() => {
-        hideDeleteDialog();
-    }, [isSucessDeleting]);
+export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDatatableProps) {
+    const { data, isLoading, isError } = useCompanyFindAll();
+    const { search, changeSearch, tableProps } = useDataTableState<Company[]>('id');
 
-    useEffect(() => {
-        if (isErrorFindingAll) {
-            errorMsg(toast, 'Erro de conexão com servidor.');
-        }
-    }, [isErrorFindingAll]);
+    // A misconfigured API URL answers with index.html instead of a list.
+    const companies = Array.isArray(data) ? data : undefined;
+    const filtered = useMemo(
+        () =>
+            (companies ?? []).filter((company) =>
+                matchesSearch(search, {
+                    text: [company.tradeName, company.businessName, company.city, company.email],
+                    digits: [company.registrationNumber, company.cpf, company.phoneNumber],
+                    id: company.id,
+                }),
+            ),
+        [companies, search],
+    );
 
-    const deleteCompany = () => {
-        mutate(company.id!);
+    const newCompanyButton = <Button label="Nova empresa" icon={<PlusIcon />} onClick={onNew} />;
 
-        isErrorDeleting ? errorMsg(toast, 'Erro ao remover empresa.') : warnMsg(toast, 'Empresa removida com sucesso.');
-    };
-
-    const confirmDeleteCompany = (company: Company) => {
-        setCompany({ ...company });
-        setDeleteCompanyDialog(true);
-    };
-
-    const hideDeleteDialog = () => {
-        setDeleteCompanyDialog(false);
-    };
-
-    const tableHeader = (
-        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Empresas</h4>
-            <IconField iconPosition="left">
-                <InputIcon className="pi pi-search"> </InputIcon>
-                <InputText
-                    type="search"
-                    onInput={(e) => setGlobalFilter(e.currentTarget.value)}
-                    placeholder="Buscar..."
-                />
-            </IconField>
+    const companyBody = (company: Company) => (
+        <div className={tableStyles.entity}>
+            <UserAvatar name={company.tradeName} id={company.id} shape="square" />
+            <div className={tableStyles.stack}>
+                <div className={tableStyles.title}>{company.tradeName}</div>
+                <div className={tableStyles.subtitle}>{company.businessName}</div>
+            </div>
         </div>
     );
 
-    const tableActions = (rowData: Company) => {
-        return (
-            <React.Fragment>
-                <Button icon="pi pi-pencil" rounded onClick={() => props.companyDetails(rowData)} />
-                <span
-                    style={{ marginBottom: '1rem', marginLeft: '5px', marginRight: '5px' }}
-                    className="pi pi-ellipsis-v"
-                ></span>
-                <Button icon="pi pi-trash" rounded severity="danger" onClick={() => confirmDeleteCompany(rowData)} />
-            </React.Fragment>
-        );
-    };
-
-    const addressBodyTemplate = (rowData: Company) => {
-        const address = buildEncodedStringAddress(rowData);
-
-        return (
-            <Button
-                icon="pi pi-map-marker"
-                rounded
-                text
-                severity="success"
-                onClick={() => searchAddressOnMaps(address)}
-            />
-        );
-    };
-
-    const searchAddressOnMaps = (parameter: string) => {
-        const searchUrl = 'https://www.google.com/maps/search/?api=1&query=' + parameter;
-
-        window.open(searchUrl, 'blank');
-    };
-
-    const showDatatable = () => {
-        if (isLoading) {
-            return (
-                <div className="flex align-items-center justify-content-center">
-                    <ProgressSpinner />
+    const documentBody = (company: Company) => (
+        <div className={tableStyles.stack}>
+            <div className={`${tableStyles.text} ${tableStyles.numeric}`}>{maskCnpj(company.registrationNumber)}</div>
+            {(company.cpf || company.stateRegistration) && (
+                <div className={tableStyles.subtitle}>
+                    {company.cpf ? `CPF ${maskCpf(company.cpf)}` : `IE ${company.stateRegistration}`}
                 </div>
-            );
-        }
+            )}
+        </div>
+    );
 
-        if (isSuccessFindingAll && Array.isArray(data)) {
-            return (
-                <div className="card">
-                    <DataTable
-                        value={data}
-                        tableStyle={{ minWidth: '50rem' }}
-                        paginator
-                        globalFilter={globalFilter}
-                        header={tableHeader}
-                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="{first} de {last} de {totalRecords} empresas"
-                        rows={5}
-                        emptyMessage="Nenhum empresa encontrada."
-                        key="id"
-                    >
-                        <Column field="id" header="Código" align="center" alignHeader="center" />
-                        <Column
-                            field="businessName"
-                            body={(rowData: Company) => rowData.businessName.toUpperCase()}
-                            header="Razão Social"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="tradeName"
-                            body={(rowData: Company) => rowData.tradeName.toUpperCase()}
-                            header="Nome Fantasia"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="registrationNumber"
-                            body={(rowData: Company) => formatRegistrationNumberDt(rowData, 'registrationNumber')}
-                            header="CNPJ"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="stateRegistration"
-                            header="Inscrição Estadual"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="phoneNumber"
-                            body={(rowData: Company) => formatPhoneNumberDt(rowData, 'phoneNumber')}
-                            header="Telefone"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="email"
-                            body={(rowData: Company) => rowData.email.toLowerCase()}
-                            header="Email"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="street"
-                            body={(rowData: Company) => addressBodyTemplate(rowData)}
-                            header="Endereço"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            body={tableActions}
-                            exportable={false}
-                            style={{ minWidth: '12rem' }}
-                            align="center"
-                            header="Ações"
-                            alignHeader="center"
-                        ></Column>
-                    </DataTable>
+    const contactBody = (company: Company) => (
+        <div className={tableStyles.stack}>
+            <div className={`${tableStyles.text} ${tableStyles.numeric}`}>{maskPhone(company.phoneNumber)}</div>
+            {company.email && (
+                <div className={tableStyles.subtitle}>
+                    <MailIcon size={13} />
+                    {company.email.toLowerCase()}
                 </div>
-            );
-        }
+            )}
+        </div>
+    );
 
-        return (
-            <div>
-                <div className="flex align-items-center justify-content-center">
-                    <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
-                    <h2 className="text-red-500">Erro de conexão com servidor.</h2>
-                </div>
-
-                <div className="flex align-items-center justify-content-center">
-                    <img alt="logo" src={serverErrorImage} height={320} />
-                </div>
+    const addressBody = (company: Company) => (
+        <div className={tableStyles.stack}>
+            <div className={tableStyles.text}>
+                {company.city}/{company.state}
             </div>
-        );
-    };
+            <div className={tableStyles.subtitle}>
+                {company.streetName}, {company.number} · {company.avenueName}
+            </div>
+        </div>
+    );
 
-    return (
-        <div>
-            <Toast ref={toast} />
-
-            <Panel>
-                <Toolbar style={{ marginBottom: '10px' }} start={props.startContent} />
-
-                {showDatatable()}
-            </Panel>
-
-            <DeleteDialog
-                deleteObjectDialog={deleteCompanyDialog}
-                hideDeleteDialog={hideDeleteDialog}
-                deleteObject={deleteCompany}
-                hideDeleteObjectDialog={hideDeleteDialog}
-                object={company}
+    const actionsBody = (company: Company) => (
+        <div className={tableStyles.actions}>
+            <Button
+                text
+                icon={<MapPinIcon />}
+                title="Ver no mapa"
+                aria-label={`Ver ${company.tradeName} no mapa`}
+                onClick={() => openOnMaps(company)}
+            />
+            <Button
+                text
+                icon={<PencilIcon />}
+                title="Editar"
+                aria-label={`Editar ${company.tradeName}`}
+                onClick={() => onEdit(company)}
+            />
+            <Button
+                text
+                severity="danger"
+                icon={<TrashIcon />}
+                title="Excluir"
+                aria-label={`Excluir ${company.tradeName}`}
+                onClick={() => onDelete(company)}
             />
         </div>
+    );
+
+    return (
+        <PageCard
+            title="Empresas"
+            count={companies?.length}
+            actions={
+                <>
+                    <SearchInput value={search} onChange={changeSearch} placeholder="Nome, CNPJ ou código" />
+                    {newCompanyButton}
+                </>
+            }
+        >
+            <ListContent
+                isLoading={isLoading}
+                isError={isError || !companies}
+                total={companies?.length ?? 0}
+                visible={filtered.length}
+                search={search}
+                onClearSearch={() => changeSearch('')}
+                errorSubject="as empresas"
+                empty={{
+                    icon: <BuildingIcon size={26} />,
+                    title: 'Nenhuma empresa cadastrada',
+                    description: 'Cadastre a primeira empresa para poder criar contratos com ela.',
+                    action: newCompanyButton,
+                }}
+                noResultsHint="Confira a grafia ou busque pelo CNPJ, telefone ou código."
+            >
+                <DataTable value={filtered} dataKey="id" tableStyle={{ minWidth: '60rem' }} {...tableProps}>
+                    <Column
+                        field="id"
+                        header="Código"
+                        sortable
+                        body={(company: Company) => <span className={tableStyles.code}>{formatCode(company.id)}</span>}
+                        headerStyle={{ width: 100 }}
+                    />
+                    <Column field="tradeName" header="Empresa" sortable body={companyBody} />
+                    <Column header="CNPJ" body={documentBody} headerStyle={{ width: 190 }} />
+                    <Column header="Contato" body={contactBody} headerStyle={{ width: 240 }} />
+                    <Column field="city" header="Endereço" sortable body={addressBody} headerStyle={{ width: 240 }} />
+                    <Column
+                        header="Ações"
+                        body={actionsBody}
+                        headerStyle={{ width: 150 }}
+                        align="right"
+                        alignHeader="right"
+                    />
+                </DataTable>
+            </ListContent>
+        </PageCard>
     );
 }

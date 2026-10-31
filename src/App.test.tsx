@@ -53,7 +53,7 @@ test('menu navigates between pages without reloading the app', async () => {
     await userEvent.click(await screen.findByRole('link', { name: 'Empresas' }));
 
     await vi.waitFor(() => expect(location.pathname).toBe('/empresas'));
-    expect(await screen.findByRole('button', { name: 'Novo' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Nova empresa' })).toBeInTheDocument();
 });
 
 test('menu marks the current page and moves focus to the content after navigating', async () => {

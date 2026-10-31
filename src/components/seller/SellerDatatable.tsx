@@ -1,19 +1,17 @@
-import { useMemo, useState } from 'react';
-import { DataTable, type DataTableStateEvent } from 'primereact/datatable';
+import { useMemo } from 'react';
+import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import type { SortOrder } from 'primereact/api';
 import PageCard from '../ui/PageCard';
 import SearchInput from '../ui/SearchInput';
-import EmptyState from '../ui/EmptyState';
+import ListContent from '../ui/ListContent';
 import UserAvatar from '../ui/UserAvatar';
-import { paginatorClassName, paginatorTemplate, rowsPerPageOptions } from '../ui/paginator';
-import { CloudOffIcon, PencilIcon, PhoneIcon, PlusIcon, SearchIcon, TrashIcon, UserPlusIcon } from '../icons';
+import { tableStyles, useDataTableState } from '../ui/dataTable';
+import { PencilIcon, PhoneIcon, PlusIcon, TrashIcon, UserPlusIcon } from '../icons';
 import { useSellerFindAll } from '../../hooks/seller/useSellerFindAll';
-import { formatCode, maskPhone, normalizeSearch } from '../../functions/StringUtils';
+import { formatCode, maskPhone } from '../../functions/StringUtils';
+import { matchesSearch } from '../../functions/search';
 import type { Seller } from '../../types';
-import styles from './SellerDatatable.module.css';
 
 interface SellerDatatableProps {
     onNew: () => void;
@@ -21,45 +19,28 @@ interface SellerDatatableProps {
     onDelete: (seller: Seller) => void;
 }
 
-/** Matches the name (ignoring accents), the phone digits or the code. */
-function matchesSearch(seller: Seller, search: string) {
-    const text = normalizeSearch(search.trim());
-    const digits = search.replace(/\D/g, '');
-    if (!text) return true;
-    return (
-        normalizeSearch(seller.name).includes(text) ||
-        (!!digits && (seller.phoneNumber.replace(/\D/g, '').includes(digits) || String(seller.id) === digits))
-    );
-}
-
 export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatatableProps) {
     const { data, isLoading, isError } = useSellerFindAll();
-    const [search, setSearch] = useState('');
-    const [first, setFirst] = useState(0);
-    const [rows, setRows] = useState(rowsPerPageOptions[0]);
-    const [sortField, setSortField] = useState<keyof Seller>('id');
-    const [sortOrder, setSortOrder] = useState<SortOrder>(1);
+    const { search, changeSearch, tableProps } = useDataTableState<Seller[]>('id');
 
     // A misconfigured API URL answers with index.html instead of a list.
     const sellers = Array.isArray(data) ? data : undefined;
     const filtered = useMemo(
-        () => (sellers ?? []).filter((seller) => matchesSearch(seller, search)),
+        () =>
+            (sellers ?? []).filter((seller) =>
+                matchesSearch(search, { text: [seller.name], digits: [seller.phoneNumber], id: seller.id }),
+            ),
         [sellers, search],
     );
-
-    const changeSearch = (value: string) => {
-        setSearch(value);
-        setFirst(0);
-    };
 
     const newSellerButton = <Button label="Novo vendedor" icon={<PlusIcon />} onClick={onNew} />;
 
     const sellerBody = (seller: Seller) => (
-        <div className={styles.seller}>
+        <div className={tableStyles.entity}>
             <UserAvatar name={seller.name} id={seller.id} src={seller.urlImage} />
-            <div className={styles.sellerText}>
-                <div className={styles.name}>{seller.name}</div>
-                <div className={styles.phone}>
+            <div className={tableStyles.stack}>
+                <div className={tableStyles.title}>{seller.name}</div>
+                <div className={tableStyles.subtitle}>
                     <PhoneIcon size={13} />
                     {maskPhone(seller.phoneNumber)}
                 </div>
@@ -68,7 +49,7 @@ export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatat
     );
 
     const actionsBody = (seller: Seller) => (
-        <div className={styles.actions}>
+        <div className={tableStyles.actions}>
             <Button
                 text
                 icon={<PencilIcon />}
@@ -87,101 +68,6 @@ export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatat
         </div>
     );
 
-    const renderContent = () => {
-        if (isLoading) {
-            return (
-                <div className={styles.loading}>
-                    <ProgressSpinner />
-                </div>
-            );
-        }
-
-        if (isError || !sellers) {
-            return (
-                <EmptyState
-                    tone="danger"
-                    icon={<CloudOffIcon size={26} />}
-                    title="Erro de conexão com servidor."
-                    description="Não foi possível carregar os vendedores. Tente novamente em alguns instantes."
-                />
-            );
-        }
-
-        if (!sellers.length) {
-            return (
-                <EmptyState
-                    icon={<UserPlusIcon size={26} />}
-                    title="Nenhum vendedor cadastrado"
-                    description="Cadastre o primeiro vendedor para poder vinculá-lo aos contratos."
-                    action={newSellerButton}
-                />
-            );
-        }
-
-        if (!filtered.length) {
-            return (
-                <EmptyState
-                    tone="neutral"
-                    icon={<SearchIcon size={22} strokeWidth={1.9} />}
-                    title={`Nenhum resultado para “${search}”`}
-                    description="Confira a grafia ou busque pelo telefone ou código."
-                    action={
-                        <Button
-                            label="Limpar busca"
-                            outlined
-                            className={styles.clearSearch}
-                            onClick={() => changeSearch('')}
-                        />
-                    }
-                />
-            );
-        }
-
-        return (
-            <DataTable
-                value={filtered}
-                dataKey="id"
-                className={styles.table}
-                sortField={sortField}
-                sortOrder={sortOrder}
-                onSort={(e: DataTableStateEvent) => {
-                    setSortField(e.sortField as keyof Seller);
-                    setSortOrder(e.sortOrder ?? 1);
-                    setFirst(0);
-                }}
-                sortIcon={({ sorted, sortOrder }) =>
-                    sorted ? <span className={styles.sortArrow}>{sortOrder === 1 ? '↑' : '↓'}</span> : null
-                }
-                paginator
-                first={first}
-                rows={rows}
-                onPage={(e: DataTableStateEvent) => {
-                    setFirst(e.first);
-                    setRows(e.rows);
-                }}
-                rowsPerPageOptions={rowsPerPageOptions}
-                paginatorTemplate={paginatorTemplate}
-                paginatorClassName={paginatorClassName}
-            >
-                <Column
-                    field="id"
-                    header="Código"
-                    sortable
-                    body={(seller: Seller) => <span className={styles.code}>{formatCode(seller.id)}</span>}
-                    headerStyle={{ width: 116 /* 96px + the row's 20px side padding */ }}
-                />
-                <Column field="name" header="Vendedor" sortable body={sellerBody} />
-                <Column
-                    header="Ações"
-                    body={actionsBody}
-                    headerStyle={{ width: 140 /* 120px + the row's 20px side padding */ }}
-                    align="right"
-                    alignHeader="right"
-                />
-            </DataTable>
-        );
-    };
-
     return (
         <PageCard
             title="Vendedores"
@@ -193,7 +79,40 @@ export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatat
                 </>
             }
         >
-            {renderContent()}
+            <ListContent
+                isLoading={isLoading}
+                isError={isError || !sellers}
+                total={sellers?.length ?? 0}
+                visible={filtered.length}
+                search={search}
+                onClearSearch={() => changeSearch('')}
+                errorSubject="os vendedores"
+                empty={{
+                    icon: <UserPlusIcon size={26} />,
+                    title: 'Nenhum vendedor cadastrado',
+                    description: 'Cadastre o primeiro vendedor para poder vinculá-lo aos contratos.',
+                    action: newSellerButton,
+                }}
+                noResultsHint="Confira a grafia ou busque pelo telefone ou código."
+            >
+                <DataTable value={filtered} dataKey="id" {...tableProps}>
+                    <Column
+                        field="id"
+                        header="Código"
+                        sortable
+                        body={(seller: Seller) => <span className={tableStyles.code}>{formatCode(seller.id)}</span>}
+                        headerStyle={{ width: 100 /* 96px + 20px row padding - 16px column gap */ }}
+                    />
+                    <Column field="name" header="Vendedor" sortable body={sellerBody} />
+                    <Column
+                        header="Ações"
+                        body={actionsBody}
+                        headerStyle={{ width: 156 /* 120px + 20px row padding + 16px column gap */ }}
+                        align="right"
+                        alignHeader="right"
+                    />
+                </DataTable>
+            </ListContent>
         </PageCard>
     );
 }

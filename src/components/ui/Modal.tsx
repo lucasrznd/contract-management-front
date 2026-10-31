@@ -10,7 +10,13 @@ interface ModalProps {
     /** id of the element that names the dialog (usually the ModalHeader title). */
     labelledBy: string;
     width?: number;
-    /** Distance from the top of the screen. */
+    /**
+     * top: opens `offsetTop` below the top of the screen, like the design's short dialogs.
+     * center: centered vertically, for long forms.
+     * Either way it never grows past the screen; the body scrolls instead.
+     */
+    position?: 'top' | 'center';
+    /** Distance from the top of the screen when `position` is top. */
     offsetTop?: string;
     role?: 'dialog' | 'alertdialog';
     children: ReactNode;
@@ -25,6 +31,7 @@ export function Modal({
     onHide,
     labelledBy,
     width = 560,
+    position = 'top',
     offsetTop = '10vh',
     role = 'dialog',
     children,
@@ -33,15 +40,18 @@ export function Modal({
         <Dialog
             visible={visible}
             onHide={onHide}
-            position="top"
+            position={position}
             draggable={false}
             resizable={false}
             dismissableMask
             blockScroll
             className={styles.modal}
             maskClassName={styles.mask}
-            maskStyle={{ paddingTop: offsetTop }}
-            style={{ width }}
+            maskStyle={position === 'top' ? { paddingTop: offsetTop } : { paddingTop: 16 }}
+            style={{
+                width,
+                maxHeight: position === 'top' ? `calc(100dvh - ${offsetTop} - 16px)` : 'calc(100dvh - 32px)',
+            }}
             pt={{ root: { role, 'aria-labelledby': labelledBy, 'aria-describedby': undefined } }}
             content={() => <>{children}</>}
         />

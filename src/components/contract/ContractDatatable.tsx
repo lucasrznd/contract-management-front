@@ -1,367 +1,234 @@
-import { errorMsg, warnMsg } from '../../functions/ToastMessage';
-import { Panel } from 'primereact/panel';
-import { Toolbar } from 'primereact/toolbar';
+import { useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import React, { useEffect, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
-import DeleteDialog from '../dialog/DeleteDialog';
+import PageCard from '../ui/PageCard';
+import SearchInput from '../ui/SearchInput';
+import ListContent from '../ui/ListContent';
+import UserAvatar from '../ui/UserAvatar';
+import StatusBadge, { type BadgeTone } from '../ui/StatusBadge';
+import { tableStyles, useDataTableState } from '../ui/dataTable';
+import {
+    CloseIcon,
+    FileTextIcon,
+    FilePlusIcon,
+    FilterIcon,
+    FolderIcon,
+    PencilIcon,
+    PlusIcon,
+    SignatureIcon,
+    TrashIcon,
+} from '../icons';
 import { useContractFindAll } from '../../hooks/contract/useContractFindAll';
-import { useContractDelete } from '../../hooks/contract/useContractDelete';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { addLocale, type LocaleOptions } from 'primereact/api';
-import { dateFormatDt, replacePdfPath } from '../../functions/StringUtils';
-import serverErrorImage from '../../assets/images/server-error.png';
-import { Toast } from 'primereact/toast';
-import { Avatar } from 'primereact/avatar';
-import ImageDialog from '../dialog/ImageDialog';
-import SearchDialog from './SearchDialog';
-import GenerateContract from './GenerateContract';
-import DigitalContract from './DigitalContract';
-import { IconField } from 'primereact/iconfield';
-import { InputIcon } from 'primereact/inputicon';
-import { InputText } from 'primereact/inputtext';
-import ContractPDFViewer from './ContractPDFViewer';
-import type { AutoCompleteCompleteEvent } from 'primereact/autocomplete';
-import type { Company, Contract, Seller } from '../../types';
+import { useContractFilter, type ContractFilter } from '../../hooks/contract/useContractFilter';
+import { formatCode } from '../../functions/StringUtils';
+import { contractStatus, formatDate, type ContractStatus } from '../../functions/contract';
+import { matchesSearch } from '../../functions/search';
+import type { Contract } from '../../types';
+import styles from './ContractDatatable.module.css';
+
+const statusTone: Record<ContractStatus['kind'], BadgeTone> = {
+    upcoming: 'primary',
+    active: 'success',
+    expiring: 'warning',
+    ended: 'neutral',
+};
 
 interface ContractDatatableProps {
-    startContent: React.ReactNode;
-    contractDetails: (contract: Contract) => void;
-    toast?: React.RefObject<Toast | null>;
-    searchVisible: boolean;
-    closeSearchDialog: () => void;
-    generateContractVisible: boolean;
-    openGenerateContractDialog: () => void;
-    closeGenerateContractDialog: () => void;
-    digitalDocVisible: boolean;
-    openDigitalDocDialog: () => void;
-    closeDigitalDocDialog: () => void;
-    companiesFilteredList: Company[];
-    companyCompleteMethod: (event: AutoCompleteCompleteEvent) => void;
-    sellersList: Seller[];
+    filter: ContractFilter | null;
+    onOpenFilter: () => void;
+    onClearFilter: () => void;
+    onNew: () => void;
+    onEdit: (contract: Contract) => void;
+    onDelete: (contract: Contract) => void;
+    /** Opens the PDF when there is one, the digital signature when it was sent, or the generator otherwise. */
+    onOpenDocument: (contract: Contract) => void;
 }
 
 export default function ContractDatatable(props: ContractDatatableProps) {
-    const [contract, setContract] = useState<Partial<Contract>>({});
-    const [pdfData, setPdfData] = useState<Contract | null>(null);
-    const [digitalContract, setDigitalContract] = useState<Contract | null>(null);
-    const [imageVisible, setImageVisible] = useState(false);
-    const { data, isLoading, isError: isErrorFindingAll, isSuccess: isSuccessFindingAll } = useContractFindAll();
-    const [contractList, setContractList] = useState<Contract[] | undefined>([]);
-    const { mutate, isSuccess: isSucessDeleting, isError: isErrorDeleting } = useContractDelete();
-    const [deleteContractDialog, setDeleteContractDialog] = useState(false);
-    const [globalFilter, setGlobalFilter] = useState<string | null>(null);
-    const toast = useRef<Toast>(null);
-    const [pdfViewerVisible, setPdfViewerVisible] = useState(false);
-    const [pdfUrl, setPdfUrl] = useState('');
+    const all = useContractFindAll();
+    const filtered = useContractFilter(props.filter);
+    const { data, isLoading, isError } = props.filter ? filtered : all;
+    const { search, changeSearch, tableProps } = useDataTableState<Contract[]>('id');
 
-    // showMonthAfterYear is read by Calendar but missing from primereact's LocaleOptions typings.
-    addLocale('pt-BR', {
-        firstDayOfWeek: 0,
-        showMonthAfterYear: true,
-        dayNames: ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'],
-        dayNamesShort: ['dom', 'seg', 'ter', 'quar', 'qui', 'sex', 'sab'],
-        dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
-        monthNames: [
-            'Janeiro',
-            'Fevereiro',
-            'Março',
-            'Abril',
-            'Maio',
-            'Junho',
-            'Julho',
-            'Agosto',
-            'Setembro',
-            'Outubro',
-            'Novembro',
-            'Dezembro',
-        ],
-        monthNamesShort: ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'],
-        today: 'Hoje',
-        clear: 'Limpar',
-    } as LocaleOptions);
+    // A misconfigured API URL answers with index.html instead of a list.
+    const contracts = Array.isArray(data) ? data : undefined;
+    const visible = useMemo(
+        () =>
+            (contracts ?? []).filter((contract) =>
+                matchesSearch(search, {
+                    text: [contract.companyTradeName, contract.sellerName, contract.advertisingOrder],
+                    id: contract.id,
+                }),
+            ),
+        [contracts, search],
+    );
 
-    const hideDeleteDialog = () => {
-        setDeleteContractDialog(false);
-    };
+    const newContractButton = <Button label="Novo contrato" icon={<PlusIcon />} onClick={props.onNew} />;
 
-    useEffect(() => {
-        setContractList(data);
-    }, [data]);
-
-    useEffect(() => {
-        hideDeleteDialog();
-    }, [isSucessDeleting]);
-
-    useEffect(() => {
-        if (isErrorFindingAll) {
-            errorMsg(toast, 'Erro de conexão com servidor.');
-        }
-    }, [isErrorFindingAll]);
-
-    const deleteContract = () => {
-        mutate(contract.id!);
-
-        isErrorDeleting
-            ? errorMsg(toast, 'Erro ao remover contrato.')
-            : warnMsg(toast, 'Contrato removido com sucesso.');
-    };
-
-    const confirmDeleteContract = (contract: Contract) => {
-        setContract({ ...contract });
-        setDeleteContractDialog(true);
-    };
-
-    const tableHeader = (
-        <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-            <h4 className="m-0">Contratos</h4>
-            <IconField iconPosition="left">
-                <InputIcon className="pi pi-search"> </InputIcon>
-                <InputText
-                    type="search"
-                    onInput={(e) => setGlobalFilter(e.currentTarget.value)}
-                    placeholder="Buscar..."
-                />
-            </IconField>
+    const companyBody = (contract: Contract) => (
+        <div className={tableStyles.stack}>
+            <div className={tableStyles.title}>{contract.companyTradeName}</div>
+            {contract.advertisingOrder && <div className={tableStyles.subtitle}>OP {contract.advertisingOrder}</div>}
         </div>
     );
 
-    const tableActions = (rowData: Contract) => {
+    const sellerBody = (contract: Contract) => (
+        <div className={tableStyles.entity}>
+            <UserAvatar name={contract.sellerName} src={contract.sellerImageUrl} size={32} />
+            <div className={tableStyles.text}>{contract.sellerName}</div>
+        </div>
+    );
+
+    const termBody = (contract: Contract) => {
+        const status = contractStatus(contract);
         return (
-            <React.Fragment>
-                <Button icon="pi pi-pencil" rounded onClick={() => props.contractDetails(rowData)} />
-                <span
-                    style={{ marginBottom: '1rem', marginLeft: '5px', marginRight: '5px' }}
-                    className="pi pi-ellipsis-v"
-                ></span>
-                <Button icon="pi pi-trash" rounded severity="danger" onClick={() => confirmDeleteContract(rowData)} />
-            </React.Fragment>
+            <div className={tableStyles.stack}>
+                <div className={`${tableStyles.text} ${tableStyles.numeric}`}>
+                    {formatDate(contract.startDate)} – {formatDate(contract.endDate)}
+                </div>
+                <StatusBadge tone={statusTone[status.kind]}>{status.label}</StatusBadge>
+            </div>
         );
     };
 
-    const openGenerateContractDialog = (rowData: Contract) => {
-        setPdfData({ ...rowData });
-        props.openGenerateContractDialog();
-    };
+    const priceBody = (contract: Contract) => <span className={styles.price}>{contract.monthlyPriceFmt}</span>;
 
-    const generateContract = (rowData: Contract) => {
-        if (rowData.pdfPath !== null) {
-            return <Button icon="pi pi-file-pdf" rounded severity="warning" onClick={() => openPdfViewer(rowData)} />;
-        }
-
-        if (rowData.token !== null) {
-            return (
-                <Button
-                    icon="pi pi-file-word"
-                    rounded
-                    text
-                    raised
-                    severity="warning"
-                    onClick={() => openDigitalDoc(rowData)}
-                />
-            );
-        }
-
+    const documentBody = (contract: Contract) => {
+        const [label, icon] = contract.pdfPath
+            ? ['Ver PDF', <FileTextIcon />]
+            : contract.token
+              ? ['Assinatura', <SignatureIcon />]
+              : ['Gerar', <FilePlusIcon />];
         return (
             <Button
-                icon="pi pi-file-plus"
-                rounded
+                size="small"
+                outlined
+                label={label}
+                icon={icon}
+                className={styles.documentButton}
+                aria-label={`${label} — contrato ${formatCode(contract.id)}`}
+                onClick={() => props.onOpenDocument(contract)}
+            />
+        );
+    };
+
+    const actionsBody = (contract: Contract) => (
+        <div className={tableStyles.actions}>
+            <Button
                 text
-                raised
-                severity="info"
-                onClick={() => openGenerateContractDialog(rowData)}
+                icon={<PencilIcon />}
+                title="Editar"
+                aria-label={`Editar contrato ${formatCode(contract.id)}`}
+                onClick={() => props.onEdit(contract)}
             />
-        );
-    };
-
-    const openPdfViewer = (rowData: Contract) => {
-        setPdfUrl(replacePdfPath(rowData.pdfPath) ?? '');
-        setPdfViewerVisible(true);
-    };
-
-    const openDigitalDoc = async (rowData: Contract) => {
-        setDigitalContract({ ...rowData });
-        props.openDigitalDocDialog();
-    };
-
-    const sellerBodyImage = (rowData: Contract) => {
-        return (
-            <div className="flex align-items-center justify-content-center">
-                <Avatar
-                    icon="pi pi-user"
-                    image={rowData.sellerImageUrl}
-                    onClick={(e) => openImgDialogSeller((e.target as HTMLImageElement).currentSrc)}
-                    className="mr-2 shadow-4"
-                    shape="circle"
-                />
-                <p>{rowData.sellerName.toUpperCase()}</p>
-            </div>
-        );
-    };
-
-    const openImgDialogSeller = (rowData: string | undefined) => {
-        setContract({ ...contract, sellerImageUrl: rowData });
-        rowData !== undefined ? setImageVisible(true) : setImageVisible(false);
-    };
-
-    const closeTableImageDialog = () => {
-        setImageVisible(false);
-    };
-
-    const closePdfViewerDialog = () => {
-        setPdfViewerVisible(false);
-    };
-
-    const showDatatable = () => {
-        if (isLoading) {
-            return (
-                <div className="flex align-items-center justify-content-center">
-                    <ProgressSpinner />
-                </div>
-            );
-        }
-
-        if (isSuccessFindingAll && Array.isArray(contractList)) {
-            return (
-                <div className="card">
-                    <DataTable
-                        value={contractList}
-                        tableStyle={{ minWidth: '50rem' }}
-                        paginator
-                        header={tableHeader}
-                        globalFilter={globalFilter}
-                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="{first} de {last} de {totalRecords} contratos"
-                        rows={5}
-                        emptyMessage="Nenhum contrato encontrado."
-                        key="id"
-                    >
-                        <Column field="id" header="Código" align="center" alignHeader="center" sortable />
-                        <Column
-                            field="companyTradeName"
-                            body={(rowData: Contract) => rowData.companyTradeName.toUpperCase()}
-                            header="Empresa"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="sellerName"
-                            body={(rowData: Contract) => sellerBodyImage(rowData)}
-                            header="Vendedor"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="advertisingOrder"
-                            header="Ordem de Propaganda"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        {/* <Column field="quantitySpotDay" header="Quantidade Spots/Dia" align="center" alignHeader="center" /> */}
-                        {/* <Column field="spotDuration" body={(rowData) => Number(rowData.spotDuration).toFixed(2)} header="Tempo do Spot" align="center" alignHeader="center" /> */}
-                        <Column
-                            field="startDate"
-                            body={(rowData: Contract) => dateFormatDt(rowData, 'startDate')}
-                            header="Data de Início"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="endDate"
-                            body={(rowData: Contract) => dateFormatDt(rowData, 'endDate')}
-                            header="Data de Término"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column
-                            field="monthlyPriceFmt"
-                            header="Preço Mensal"
-                            className="font-bold"
-                            align="center"
-                            alignHeader="center"
-                        />
-                        <Column header="Gerar Contrato" body={generateContract} align="center" alignHeader="center" />
-                        <Column
-                            body={tableActions}
-                            exportable={false}
-                            style={{ minWidth: '12rem' }}
-                            align="center"
-                            header="Ações"
-                            alignHeader="center"
-                        ></Column>
-                    </DataTable>
-                </div>
-            );
-        }
-
-        return (
-            <div>
-                <div className="flex align-items-center justify-content-center">
-                    <i className="pi pi-exclamation-circle mr-2 text-red-500"></i>
-                    <h2 className="text-red-500">Erro de conexão com servidor.</h2>
-                </div>
-
-                <div className="flex align-items-center justify-content-center">
-                    <img alt="logo" src={serverErrorImage} height={320} />
-                </div>
-            </div>
-        );
-    };
-
-    return (
-        <div>
-            <Toast ref={toast} />
-
-            <Panel>
-                <Toolbar style={{ marginBottom: '10px' }} start={props.startContent} />
-
-                {showDatatable()}
-            </Panel>
-
-            <ImageDialog
-                visible={imageVisible}
-                onHide={closeTableImageDialog}
-                header="Imagem do Vendedor"
-                src={contract.sellerImageUrl}
-            />
-
-            <GenerateContract
-                generateContractVisible={props.generateContractVisible}
-                closeGenerateContractDialog={props.closeGenerateContractDialog}
-                data={pdfData}
-            />
-
-            <DigitalContract
-                data={digitalContract}
-                digitalDocVisible={props.digitalDocVisible}
-                openDigitalDocDialog={props.openDigitalDocDialog}
-                closeDigitalDocDialog={props.closeDigitalDocDialog}
-            />
-
-            <ContractPDFViewer
-                src={pdfUrl}
-                pdfViewerVisible={pdfViewerVisible}
-                closePdfViewerDialog={closePdfViewerDialog}
-            />
-
-            <SearchDialog
-                searchVisible={props.searchVisible}
-                closeSearchDialog={props.closeSearchDialog}
-                companiesFilteredList={props.companiesFilteredList}
-                companyCompleteMethod={props.companyCompleteMethod}
-                sellersList={props.sellersList}
-                contractList={contractList}
-                setContractList={setContractList}
-            />
-
-            <DeleteDialog
-                deleteObjectDialog={deleteContractDialog}
-                hideDeleteDialog={hideDeleteDialog}
-                deleteObject={deleteContract}
-                hideDeleteObjectDialog={hideDeleteDialog}
-                object={contract}
+            <Button
+                text
+                severity="danger"
+                icon={<TrashIcon />}
+                title="Excluir"
+                aria-label={`Excluir contrato ${formatCode(contract.id)}`}
+                onClick={() => props.onDelete(contract)}
             />
         </div>
+    );
+
+    return (
+        <PageCard
+            title="Contratos"
+            count={contracts?.length}
+            actions={
+                <>
+                    <SearchInput value={search} onChange={changeSearch} placeholder="Empresa, vendedor ou código" />
+                    <Button
+                        label="Filtrar"
+                        outlined
+                        icon={<FilterIcon />}
+                        className={styles.filterButton}
+                        onClick={props.onOpenFilter}
+                    />
+                    {newContractButton}
+                </>
+            }
+        >
+            {props.filter && (
+                <div className={styles.filterBar} role="status">
+                    <FilterIcon size={14} />
+                    <span>
+                        Filtrando por <strong>{props.filter.label}</strong>
+                    </span>
+                    <Button
+                        text
+                        size="small"
+                        label="Limpar filtro"
+                        icon={<CloseIcon size={14} />}
+                        className={styles.clearFilter}
+                        onClick={props.onClearFilter}
+                    />
+                </div>
+            )}
+
+            <ListContent
+                isLoading={isLoading}
+                isError={isError || !contracts}
+                total={contracts?.length ?? 0}
+                visible={visible.length}
+                search={search}
+                onClearSearch={() => changeSearch('')}
+                errorSubject="os contratos"
+                empty={
+                    props.filter
+                        ? {
+                              icon: <FilterIcon size={24} />,
+                              title: 'Nenhum contrato encontrado',
+                              description: 'Nenhum contrato corresponde ao filtro aplicado.',
+                              action: <Button label="Limpar filtro" outlined onClick={props.onClearFilter} />,
+                          }
+                        : {
+                              icon: <FolderIcon size={26} />,
+                              title: 'Nenhum contrato cadastrado',
+                              description: 'Cadastre o primeiro contrato de veiculação de uma empresa.',
+                              action: newContractButton,
+                          }
+                }
+                noResultsHint="Confira a grafia ou busque pela empresa, vendedor, ordem de propaganda ou código."
+            >
+                <DataTable value={visible} dataKey="id" tableStyle={{ minWidth: '64rem' }} {...tableProps}>
+                    <Column
+                        field="id"
+                        header="Código"
+                        sortable
+                        body={(contract: Contract) => (
+                            <span className={tableStyles.code}>{formatCode(contract.id)}</span>
+                        )}
+                        headerStyle={{ width: 100 }}
+                    />
+                    <Column field="companyTradeName" header="Empresa" sortable body={companyBody} />
+                    <Column
+                        field="sellerName"
+                        header="Vendedor"
+                        sortable
+                        body={sellerBody}
+                        headerStyle={{ width: 200 }}
+                    />
+                    <Column field="endDate" header="Vigência" sortable body={termBody} headerStyle={{ width: 210 }} />
+                    <Column
+                        header="Valor mensal"
+                        body={priceBody}
+                        headerStyle={{ width: 140 }}
+                        align="right"
+                        alignHeader="right"
+                    />
+                    <Column header="Contrato" body={documentBody} headerStyle={{ width: 150 }} />
+                    <Column
+                        header="Ações"
+                        body={actionsBody}
+                        headerStyle={{ width: 110 }}
+                        align="right"
+                        alignHeader="right"
+                    />
+                </DataTable>
+            </ListContent>
+        </PageCard>
     );
 }
