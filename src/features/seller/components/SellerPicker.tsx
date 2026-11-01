@@ -1,6 +1,7 @@
-import { Dropdown } from 'primereact/dropdown';
+import { AutoComplete } from 'primereact/autocomplete';
 import UserAvatar from '@/shared/components/ui/UserAvatar';
-import { useSellerFindAll } from '../service/seller.service';
+import { useSellerSearch } from '../service/seller.service';
+import { useSuggestions } from '@/shared/hooks/useSuggestions';
 import type { Seller } from '../types/seller.types';
 
 interface SellerPickerProps {
@@ -10,34 +11,31 @@ interface SellerPickerProps {
     onBlur?: () => void;
     invalid?: boolean;
     'aria-describedby'?: string;
-    /** Lets the field be emptied (for optional filters). */
-    showClear?: boolean;
 }
 
-/** Dropdown of the registered sellers, with photo and a search box. */
+/** Type-ahead over the registered sellers, with photo, searched by the API. The button lists the first ones. */
 export default function SellerPicker({ value, onChange, ...props }: SellerPickerProps) {
-    const { data } = useSellerFindAll();
-    const sellers = Array.isArray(data) ? data : [];
+    const suggestions = useSuggestions(useSellerSearch());
 
     return (
-        <Dropdown
+        <AutoComplete
             {...props}
+            {...suggestions}
             value={value}
-            options={sellers}
-            optionLabel="name"
-            dataKey="id"
-            filter
-            filterPlaceholder="Buscar vendedor"
-            emptyFilterMessage="Nenhum vendedor encontrado"
-            emptyMessage="Nenhum vendedor cadastrado"
-            placeholder="Selecione"
+            field="name"
+            dropdown
+            dropdownAriaLabel="Listar vendedores"
+            forceSelection
             itemTemplate={(seller: Seller) => (
                 <div className="flex align-items-center gap-2">
                     <UserAvatar name={seller.name} id={seller.id} src={seller.urlImage} size={24} />
                     {seller.name}
                 </div>
             )}
-            onChange={(e) => onChange(e.value ?? null)}
+            onChange={(e) => onChange(typeof e.value === 'object' && e.value ? e.value : null)}
+            placeholder="Busque pelo nome"
+            emptyMessage="Nenhum vendedor encontrado"
+            showEmptyMessage
             aria-invalid={props.invalid}
         />
     );

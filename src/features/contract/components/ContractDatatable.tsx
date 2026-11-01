@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -21,6 +21,7 @@ import {
 } from '@/shared/components/icons';
 import { useContractFindAll, useContractFilter } from '../service/contract.service';
 import { formatCode } from '@/shared/helpers/stringUtils.helper';
+import { isPage } from '@/shared/api/pagination';
 import { contractStatus, formatDate, type ContractStatus } from '../helpers/contractStatus.helper';
 import { matchesSearch } from '@/shared/helpers/search.helper';
 import type { Contract, ContractFilter } from '../types/contract.types';
@@ -45,23 +46,54 @@ interface ContractDatatableProps {
 }
 
 export default function ContractDatatable(props: ContractDatatableProps) {
-    const all = useContractFindAll();
+    // The filter endpoints still answer whole lists, so a filtered view is searched, sorted and paged here.
+    const isFiltering = props.filter !== null;
+    const { search, committedSearch, changeSearch, resetPage, request, tableProps } = useDataTableState<Contract[]>({
+        sortFields: ['id', 'companyTradeName', 'sellerName', 'endDate'],
+        lazy: !isFiltering,
+    });
+    const all = useContractFindAll(request, { enabled: !isFiltering });
     const filtered = useContractFilter(props.filter);
-    const { data, isLoading, isError } = props.filter ? filtered : all;
-    const { search, changeSearch, tableProps } = useDataTableState<Contract[]>('id');
+    // A new filter starts from its first page; on mount, the page in the URL is kept.
+    const previousFilter = useRef(props.filter);
+    useEffect(() => {
+        if (previousFilter.current !== props.filter) resetPage();
+        previousFilter.current = props.filter;
+    }, [props.filter]);
 
+    const page = isPage<Contract>(all.data) ? all.data : undefined;
     // A misconfigured API URL answers with index.html instead of a list.
-    const contracts = Array.isArray(data) ? data : undefined;
-    const visible = useMemo(
+    const filteredContracts = Array.isArray(filtered.data) ? filtered.data : undefined;
+    const filteredVisible = useMemo(
         () =>
-            (contracts ?? []).filter((contract) =>
+            (filteredContracts ?? []).filter((contract) =>
                 matchesSearch(search, {
                     text: [contract.companyTradeName, contract.sellerName, contract.advertisingOrder],
                     id: contract.id,
                 }),
             ),
-        [contracts, search],
+        [filteredContracts, search],
     );
+
+    const list = isFiltering
+        ? {
+              ...filtered,
+              rows: filteredVisible,
+              count: filteredContracts?.length,
+              isError: filtered.isError || !filteredContracts,
+              isEmpty: !filteredContracts?.length,
+              noResults: !filteredVisible.length,
+              search,
+          }
+        : {
+              ...all,
+              rows: page?.content,
+              count: page?.page.totalElements,
+              isError: all.isError || !page,
+              isEmpty: !committedSearch && !page?.page.totalElements,
+              noResults: !!committedSearch && !page?.page.totalElements,
+              search: committedSearch,
+          };
 
     const newContractButton = <Button label="Novo contrato" icon={<PlusIcon />} onClick={props.onNew} />;
 
@@ -135,10 +167,10 @@ export default function ContractDatatable(props: ContractDatatableProps) {
     return (
         <PageCard
             title="Contratos"
-            count={contracts?.length}
+            count={list.count}
             actions={
                 <>
-                    <SearchInput value={search} onChange={changeSearch} placeholder="Empresa, vendedor ou código" />
+                    <SearchInput value={search} onChange={changeSearch} placeholder="Empresa, vendedor ou OP" />
                     <Button
                         label="Filtrar"
                         outlined
@@ -168,11 +200,11 @@ export default function ContractDatatable(props: ContractDatatableProps) {
             )}
 
             <ListContent
-                isLoading={isLoading}
-                isError={isError || !contracts}
-                total={contracts?.length ?? 0}
-                visible={visible.length}
-                search={search}
+                isLoading={list.isLoading}
+                isError={list.isError}
+                isEmpty={list.isEmpty}
+                noResults={list.noResults}
+                search={list.search}
                 onClearSearch={() => changeSearch('')}
                 errorSubject="os contratos"
                 empty={
@@ -190,9 +222,15 @@ export default function ContractDatatable(props: ContractDatatableProps) {
                               action: newContractButton,
                           }
                 }
-                noResultsHint="Confira a grafia ou busque pela empresa, vendedor, ordem de propaganda ou código."
+                noResultsHint="Confira a grafia ou busque pela empresa, vendedor ou ordem de propaganda."
             >
-                <DataTable value={visible} dataKey="id" tableStyle={{ minWidth: '64rem' }} {...tableProps}>
+                <DataTable
+                    value={list.rows}
+                    dataKey="id"
+                    tableStyle={{ minWidth: '64rem' }}
+                    loading={list.isPlaceholderData}
+                    {...tableProps(isFiltering ? filteredVisible.length : page?.page.totalElements)}
+                >
                     <Column
                         field="id"
                         header="Código"

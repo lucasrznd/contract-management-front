@@ -4,9 +4,10 @@ import { api } from '@/shared/api/api';
 import { expect, test, vi } from 'vitest';
 import ContractFilterDialog from './ContractFilterDialog';
 import { renderWithProviders } from '@/test/renderWithProviders';
+import { pageOf } from '@/test/pageOf';
 
 test('company and seller are required in the first mode', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: [] });
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf([]) });
     const onApply = vi.fn();
     renderWithProviders(<ContractFilterDialog visible onHide={() => {}} onApply={onApply} />);
 
@@ -18,7 +19,7 @@ test('company and seller are required in the first mode', async () => {
 });
 
 test('the period mode asks for both dates and not for company or seller', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: [] });
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf([]) });
     renderWithProviders(<ContractFilterDialog visible onHide={() => {}} onApply={() => {}} />);
 
     await userEvent.click(await screen.findByRole('tab', { name: 'Período' }));

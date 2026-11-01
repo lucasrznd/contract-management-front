@@ -1,10 +1,11 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { api } from '@/shared/api/api';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import ContractDatatable from './ContractDatatable';
 import { renderWithProviders } from '@/test/renderWithProviders';
-import type { Contract } from '../types/contract.types';
+import { pageOf } from '@/test/pageOf';
+import type { Contract, ContractFilter } from '../types/contract.types';
 
 const base: Contract = {
     id: 1,
@@ -42,9 +43,9 @@ afterEach(() => {
     vi.useRealTimers();
 });
 
-function renderTable() {
+function renderTable(filter: ContractFilter | null = null) {
     const props = {
-        filter: null,
+        filter,
         onOpenFilter: vi.fn(),
         onClearFilter: vi.fn(),
         onNew: vi.fn(),
@@ -58,8 +59,17 @@ function renderTable() {
 
 const rowOf = (text: string) => screen.getByText(text).closest('tr')!;
 
+/** Params of the last GET /contracts. */
+const lastParams = (get: ReturnType<typeof vi.spyOn>) => get.mock.lastCall![1].params;
+
+const periodFilter: ContractFilter = {
+    kind: 'period',
+    label: 'jan–dez 2026',
+    params: { startDate: '2026-01-01', endDate: '2026-12-31' },
+};
+
 test('shows the term status and the document action of each contract', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: contracts });
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(contracts) });
     const { onOpenDocument } = renderTable();
 
     await screen.findByText('Padaria Pão Quente');
@@ -74,19 +84,43 @@ test('shows the term status and the document action of each contract', async () 
     expect(onOpenDocument).toHaveBeenCalledWith(contracts[1]);
 });
 
-test('searches by company, seller or code', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: contracts });
+test('searches on the API, keeping the advertising order as typed', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(contracts) });
     renderTable();
+    await screen.findByText('Padaria Pão Quente');
+
+    await userEvent.type(screen.getByRole('searchbox'), '2025-031');
+
+    await waitFor(() => expect(lastParams(get)).toMatchObject({ text: '2025-031', page: 0 }));
+});
+
+test('sorts company and seller by their entity paths', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(contracts) });
+    renderTable();
+    await screen.findByText('Padaria Pão Quente');
+
+    await userEvent.click(screen.getByText('Empresa'));
+    await waitFor(() => expect(lastParams(get).sort).toEqual(['clientCompany.tradeName,asc', 'id,asc']));
+
+    await userEvent.click(screen.getByText('Vendedor'));
+    await waitFor(() => expect(lastParams(get).sort).toEqual(['seller.name,asc', 'id,asc']));
+});
+
+test('a filtered list is searched on screen, without asking the paginated endpoint', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: contracts });
+    renderTable(periodFilter);
     await screen.findByText('Padaria Pão Quente');
 
     await userEvent.type(screen.getByRole('searchbox'), 'carlos');
 
     expect(screen.queryByText('Padaria Pão Quente')).not.toBeInTheDocument();
     expect(screen.getByText('Farmácia Saúde')).toBeInTheDocument();
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledWith('/contracts/list', { params: periodFilter.params });
 });
 
 test('shows an empty state when there are no contracts', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: [] });
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf([]) });
     renderTable();
 
     expect(await screen.findByRole('heading', { name: 'Nenhum contrato cadastrado' })).toBeInTheDocument();

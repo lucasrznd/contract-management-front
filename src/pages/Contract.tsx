@@ -9,8 +9,6 @@ import ContractPdfDialog from '@/features/contract/components/ContractPdfDialog'
 import DeleteDialog from '@/shared/components/dialog/DeleteDialog';
 import { useToast } from '@/shared/components/ui/toast/ToastProvider';
 import { useContractDelete } from '@/features/contract/service/contract.service';
-import { useCompanyFindAll } from '@/features/company/service/company.service';
-import { useSellerFindAll } from '@/features/seller/service/seller.service';
 import { useDialogState } from '@/shared/hooks/useDialogState';
 import { formatCode } from '@/shared/helpers/stringUtils.helper';
 import type { Contract, ContractFilter } from '@/features/contract/types/contract.types';
@@ -25,10 +23,6 @@ export default function ContractPage() {
     const generate = useDialogState<Contract>();
     const digital = useDialogState<Contract>();
     const pdf = useDialogState<Contract>();
-
-    // The form and the filter pick companies and sellers; load them before they're opened.
-    useCompanyFindAll();
-    useSellerFindAll();
 
     const openDocument = (contract: Contract) => {
         if (contract.pdfPath) pdf.open(contract);
