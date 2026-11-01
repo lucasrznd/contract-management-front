@@ -19,7 +19,9 @@ interface SellerDatatableProps {
 }
 
 export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatatableProps) {
-    const { search, committedSearch, changeSearch, request, tableProps } = useDataTableState<Seller[]>('id');
+    const { search, committedSearch, changeSearch, request, tableProps } = useDataTableState<Seller[]>({
+        sortFields: ['id', 'name'],
+    });
     const { data, isLoading, isError, isPlaceholderData } = useSellerFindAll(request);
     const page = isPage<Seller>(data) ? data : undefined;
     const total = page?.page.totalElements ?? 0;
@@ -86,7 +88,12 @@ export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatat
                 }}
                 noResultsHint="Confira a grafia ou busque pelo telefone."
             >
-                <DataTable value={page?.content} dataKey="id" loading={isPlaceholderData} {...tableProps(page)}>
+                <DataTable
+                    value={page?.content}
+                    dataKey="id"
+                    loading={isPlaceholderData}
+                    {...tableProps(page?.page.totalElements)}
+                >
                     <Column
                         field="id"
                         header="Código"

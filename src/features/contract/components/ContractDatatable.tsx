@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -48,13 +48,18 @@ interface ContractDatatableProps {
 export default function ContractDatatable(props: ContractDatatableProps) {
     // The filter endpoints still answer whole lists, so a filtered view is searched, sorted and paged here.
     const isFiltering = props.filter !== null;
-    const { search, committedSearch, changeSearch, resetPage, request, tableProps } = useDataTableState<Contract[]>(
-        'id',
-        { lazy: !isFiltering },
-    );
+    const { search, committedSearch, changeSearch, resetPage, request, tableProps } = useDataTableState<Contract[]>({
+        sortFields: ['id', 'companyTradeName', 'sellerName', 'endDate'],
+        lazy: !isFiltering,
+    });
     const all = useContractFindAll(request, { enabled: !isFiltering });
     const filtered = useContractFilter(props.filter);
-    useEffect(resetPage, [props.filter]);
+    // A new filter starts from its first page; on mount, the page in the URL is kept.
+    const previousFilter = useRef(props.filter);
+    useEffect(() => {
+        if (previousFilter.current !== props.filter) resetPage();
+        previousFilter.current = props.filter;
+    }, [props.filter]);
 
     const page = isPage<Contract>(all.data) ? all.data : undefined;
     // A misconfigured API URL answers with index.html instead of a list.
@@ -224,7 +229,7 @@ export default function ContractDatatable(props: ContractDatatableProps) {
                     dataKey="id"
                     tableStyle={{ minWidth: '64rem' }}
                     loading={list.isPlaceholderData}
-                    {...tableProps(isFiltering ? undefined : page)}
+                    {...tableProps(isFiltering ? filteredVisible.length : page?.page.totalElements)}
                 >
                     <Column
                         field="id"

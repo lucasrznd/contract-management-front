@@ -32,7 +32,9 @@ const openOnMaps = (company: Company) =>
     );
 
 export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDatatableProps) {
-    const { search, committedSearch, changeSearch, request, tableProps } = useDataTableState<Company[]>('id');
+    const { search, committedSearch, changeSearch, request, tableProps } = useDataTableState<Company[]>({
+        sortFields: ['id', 'tradeName', 'city'],
+    });
     const { data, isLoading, isError, isPlaceholderData } = useCompanyFindAll(request);
     const page = isPage<Company>(data) ? data : undefined;
     const total = page?.page.totalElements ?? 0;
@@ -142,7 +144,7 @@ export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDat
                     dataKey="id"
                     tableStyle={{ minWidth: '60rem' }}
                     loading={isPlaceholderData}
-                    {...tableProps(page)}
+                    {...tableProps(page?.page.totalElements)}
                 >
                     <Column
                         field="id"

@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { api } from '@/shared/api/api';
+import { useNavigate } from 'react-router';
 import { expect, test, vi } from 'vitest';
 import SellerDatatable from './SellerDatatable';
 import { renderWithProviders } from '@/test/renderWithProviders';
@@ -12,10 +13,10 @@ const sellers = [
     { id: 12, name: 'Ricardo Alves', phoneNumber: '1933815555', urlImage: '' },
 ];
 
-function renderTable() {
+function renderTable(url?: string) {
     const props = { onNew: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() };
-    renderWithProviders(<SellerDatatable {...props} />);
-    return props;
+    const { location } = renderWithProviders(<SellerDatatable {...props} />, { url });
+    return { ...props, location };
 }
 
 /** Params of the last GET /sellers. */
@@ -113,4 +114,81 @@ test('row actions edit and delete the seller', async () => {
 
     expect(onEdit).toHaveBeenCalledWith(sellers[0]);
     expect(onDelete).toHaveBeenCalledWith(sellers[0]);
+});
+
+test('opens the search, sort and page the URL asks for', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers, { totalElements: 60 }) });
+    renderTable('/?text=silva&page=3&size=25&sort=name,desc');
+
+    expect(await screen.findByRole('searchbox')).toHaveValue('silva');
+    expect(get).toHaveBeenCalledWith('/sellers', {
+        params: { text: 'silva', page: 2, size: 25, sort: ['name,desc', 'id,asc'] },
+    });
+});
+
+test('falls back to the defaults for URL values it cannot use', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers) });
+    renderTable('/?page=abc&size=999&sort=password,desc');
+
+    await screen.findByText('Jorge Silva');
+    expect(get).toHaveBeenCalledWith('/sellers', {
+        params: { text: undefined, page: 0, size: 10, sort: ['id,asc'] },
+    });
+});
+
+test('keeps the search, sort and page in the URL, leaving defaults out', async () => {
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers, { totalElements: 42 }) });
+    const { location } = renderTable();
+    await screen.findByText('Jorge Silva');
+    expect(location.search).toBe('');
+
+    await userEvent.click(screen.getByText('Vendedor'));
+    await waitFor(() => expect(location.search).toBe('?sort=name%2Casc'));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
+    await waitFor(() => expect(location.search).toBe('?sort=name%2Casc&page=2'));
+
+    // A new search goes back to the first page.
+    await userEvent.type(screen.getByRole('searchbox'), 'jorge');
+    await waitFor(() => expect(location.search).toBe('?sort=name%2Casc&text=jorge'));
+
+    await userEvent.clear(screen.getByRole('searchbox'));
+    await waitFor(() => expect(location.search).toBe('?sort=name%2Casc'));
+});
+
+test('steps back to the last page when the one in the URL no longer exists', async () => {
+    vi.spyOn(api, 'get').mockImplementation(async (_url, config) => ({
+        data: pageOf(config?.params.page === 4 ? [] : sellers, { totalElements: 23 }),
+    }));
+    const { location } = renderTable('/?page=5');
+
+    await waitFor(() => expect(location.search).toBe('?page=3'));
+    expect(await screen.findByText('Jorge Silva')).toBeInTheDocument();
+});
+
+test('the back button restores the previous search in the input', async () => {
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers) });
+    function Back() {
+        const navigate = useNavigate();
+        return <button onClick={() => navigate(-1)}>Voltar</button>;
+    }
+    const { location } = renderWithProviders(
+        <>
+            <SellerDatatable onNew={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />
+            <Back />
+        </>,
+        { url: '/?text=jorge' },
+    );
+    await screen.findByText('Jorge Silva');
+
+    // Sorting adds a history entry; the search box keeps "jorge".
+    await userEvent.click(screen.getByText('Vendedor'));
+    await waitFor(() => expect(location.search).toContain('sort='));
+    await userEvent.clear(screen.getByRole('searchbox'));
+    await waitFor(() => expect(location.search).not.toContain('text='));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+
+    await waitFor(() => expect(location.search).toBe('?text=jorge'));
+    expect(screen.getByRole('searchbox')).toHaveValue('jorge');
 });
