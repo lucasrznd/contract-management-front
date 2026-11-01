@@ -14,12 +14,12 @@ body {
 }
 
 a {
-    color: var(--color-primary);
+    color: var(--color-accent-icon);
     text-decoration: none;
 }
 
 a:hover {
-    color: var(--color-primary-hover);
+    color: var(--color-accent-text);
     text-decoration: underline;
 }
 
@@ -29,4 +29,34 @@ input::placeholder {
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ---------- Theme switch transitions ---------- */
+
+/* Fallback (no View Transitions API or reduced motion): colors fade instead of the circular reveal. */
+:root.egc-fade * {
+    transition:
+        background-color 0.35s ease,
+        border-color 0.35s ease,
+        color 0.35s ease !important;
+}
+
+/* The new theme is revealed in a circle growing from the switch (--vt-* are set by ThemeProvider). */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+    animation: egc-reveal 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@keyframes egc-reveal {
+    from {
+        clip-path: circle(0px at var(--vt-x, 40px) var(--vt-y, 90%));
+    }
+    to {
+        clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 40px) var(--vt-y, 90%));
+    }
 }

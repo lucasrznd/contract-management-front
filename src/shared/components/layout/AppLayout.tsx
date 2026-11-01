@@ -2,10 +2,11 @@ import { Suspense, useEffect, useRef } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Outlet, useLocation } from 'react-router';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import AppHeader from './AppHeader';
+import AppSidenav from './AppSidenav';
 import AppFooter from '@/shared/components/footer/AppFooter';
 import RouteErrorBoundary from './RouteErrorBoundary';
 import { ToastProvider } from '@/shared/components/ui/toast/ToastProvider';
+import { ThemeProvider } from '@/shared/theme/ThemeProvider';
 import styles from './AppLayout.module.css';
 
 export default function AppLayout() {
@@ -23,28 +24,32 @@ export default function AppLayout() {
 
     return (
         <HelmetProvider>
-            <ToastProvider>
-                <div className={styles.shell}>
-                    <AppHeader />
+            <ThemeProvider>
+                <ToastProvider>
+                    <div className={styles.shell}>
+                        <AppSidenav />
 
-                    <main ref={mainRef} tabIndex={-1} className={styles.main}>
-                        {/* Keyed by path so navigating away from a failed page clears the error. */}
-                        <RouteErrorBoundary key={pathname}>
-                            <Suspense
-                                fallback={
-                                    <div className={styles.fallback}>
-                                        <ProgressSpinner />
-                                    </div>
-                                }
-                            >
-                                <Outlet />
-                            </Suspense>
-                        </RouteErrorBoundary>
-                    </main>
+                        <div className={styles.content}>
+                            <main ref={mainRef} tabIndex={-1} className={styles.main}>
+                                {/* Keyed by path so navigating away from a failed page clears the error. */}
+                                <RouteErrorBoundary key={pathname}>
+                                    <Suspense
+                                        fallback={
+                                            <div className={styles.fallback}>
+                                                <ProgressSpinner />
+                                            </div>
+                                        }
+                                    >
+                                        <Outlet />
+                                    </Suspense>
+                                </RouteErrorBoundary>
+                            </main>
 
-                    <AppFooter />
-                </div>
-            </ToastProvider>
+                            <AppFooter />
+                        </div>
+                    </div>
+                </ToastProvider>
+            </ThemeProvider>
         </HelmetProvider>
     );
 }

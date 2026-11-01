@@ -1,6 +1,12 @@
 .shell {
     min-height: 100vh;
     display: flex;
+}
+
+.content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
     flex-direction: column;
 }
 
@@ -18,6 +24,13 @@
     align-items: center;
     justify-content: center;
     padding: 64px 0;
+}
+
+/* Same breakpoint as MOBILE_QUERY in AppSidenav.tsx: top bar above the content, drawer off-canvas. */
+@media (max-width: 767px) {
+    .shell {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 640px) {

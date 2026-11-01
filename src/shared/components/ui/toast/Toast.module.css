@@ -8,7 +8,7 @@ div.toast {
     margin: 8px 0 0;
     border: 0;
     border-radius: var(--radius-md);
-    background: var(--color-gray-900);
+    background: var(--color-toast);
     box-shadow: var(--shadow-toast);
 }
 

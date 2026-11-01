@@ -25,7 +25,7 @@ button.filterButton {
     padding: 8px 12px 8px 20px;
     border-bottom: 1px solid var(--color-gray-150);
     background: var(--color-primary-soft);
-    color: var(--color-primary-hover);
+    color: var(--color-accent-text);
     font-size: 13px;
 }
 
@@ -35,10 +35,10 @@ button.filterButton {
 
 button.clearFilter {
     margin-left: auto;
-    color: var(--color-primary-hover);
+    color: var(--color-accent-text);
 }
 
 button.clearFilter:not(:disabled):hover {
-    background: rgba(37, 99, 235, 0.08);
-    color: var(--color-primary-hover);
+    background: var(--color-primary-soft);
+    color: var(--color-accent-text);
 }

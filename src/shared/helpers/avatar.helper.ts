@@ -1,15 +1,13 @@
 // Background/foreground pairs for avatars without a photo, picked by record id.
-const AVATAR_TINTS: [background: string, foreground: string][] = [
-    ['#E8EEFD', '#2F5BD3'],
-    ['#E3F4EC', '#1F7A55'],
-    ['#FDF0E3', '#A9520F'],
-    ['#F0EAFB', '#6B46C1'],
-    ['#FCE8EE', '#B4234D'],
-    ['#E3F2F7', '#1B6B86'],
+// They are CSS variables (tokens.css) so the tints follow the light/dark theme.
+const AVATAR_TINT_COUNT = 6;
+
+export const NEUTRAL_TINT: [background: string, foreground: string] = [
+    'var(--color-gray-200)',
+    'var(--color-gray-500)',
 ];
 
-export const NEUTRAL_TINT: [background: string, foreground: string] = ['#E5E7EB', '#6B7280'];
-
-export function avatarTint(id: number) {
-    return AVATAR_TINTS[(((id - 1) % AVATAR_TINTS.length) + AVATAR_TINTS.length) % AVATAR_TINTS.length];
+export function avatarTint(id: number): [background: string, foreground: string] {
+    const n = ((((id - 1) % AVATAR_TINT_COUNT) + AVATAR_TINT_COUNT) % AVATAR_TINT_COUNT) + 1;
+    return [`var(--avatar-${n}-bg)`, `var(--avatar-${n}-fg)`];
 }
