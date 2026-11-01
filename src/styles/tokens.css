@@ -9,6 +9,9 @@
     --color-primary: #2563eb;
     --color-primary-hover: #1d4ed8;
     --color-primary-soft: #eff4ff;
+    /* Text and icons in the brand color; lighter in dark mode, while fills keep --color-primary. */
+    --color-accent-text: #1d4ed8;
+    --color-accent-icon: #2563eb;
     --color-focus: #3b82f6;
     --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.18);
 
@@ -31,9 +34,34 @@
 
     /* Feedback */
     --color-danger: #dc2626;
-    --color-danger-hover: #b91c1c;
     --color-danger-soft: #fef2f2;
+    /* Destructive button fill: the same in both themes (--color-danger is for text and borders). */
+    --color-danger-fill: #dc2626;
+    --color-danger-fill-hover: #b91c1c;
     --color-success: #4ade80;
+    --color-success-soft: #e3f4ec;
+    --color-success-text: #1f7a55;
+    --color-warning-soft: #fdf0e3;
+    --color-warning-text: #a9520f;
+    --color-toast: #111827;
+
+    /* Avatar initials (background/foreground pairs, picked by record id). */
+    --avatar-1-bg: #e8eefd;
+    --avatar-1-fg: #2f5bd3;
+    --avatar-2-bg: #e3f4ec;
+    --avatar-2-fg: #1f7a55;
+    --avatar-3-bg: #fdf0e3;
+    --avatar-3-fg: #a9520f;
+    --avatar-4-bg: #f0eafb;
+    --avatar-4-fg: #6b46c1;
+    --avatar-5-bg: #fce8ee;
+    --avatar-5-fg: #b4234d;
+    --avatar-6-bg: #e3f2f7;
+    --avatar-6-fg: #1b6b86;
+
+    /* Logo wordmark gradient (the blue "Educadora" and slogan). */
+    --logo-ink-start: #000066;
+    --logo-ink-end: #0098da;
 
     /* Shape */
     --radius-sm: 6px;
@@ -52,7 +80,10 @@
 
     /* Layout */
     --container-width: 1280px;
-    --header-height: 68px;
+    --sidenav-width: 240px;
+    --sidenav-width-collapsed: 72px;
+    --sidenav-header-height: 68px;
+    --topbar-height: 56px;
 
     /* Lara */
     --primary-color: var(--color-primary);
@@ -61,8 +92,70 @@
     --text-color-secondary: var(--color-gray-500);
     --surface-ground: var(--color-background);
     --surface-card: var(--color-surface);
+    --surface-section: var(--color-surface);
+    --surface-overlay: var(--color-surface);
+    --surface-hover: var(--color-gray-100);
+    --surface-a: var(--color-surface);
+    --surface-b: var(--color-gray-50);
+    --surface-c: var(--color-gray-100);
+    --surface-d: var(--color-gray-200);
+    --surface-e: var(--color-surface);
+    --surface-f: var(--color-surface);
     --surface-border: var(--color-gray-200);
     --border-radius: var(--radius-md);
     --highlight-bg: var(--color-primary-soft);
-    --highlight-text-color: var(--color-primary-hover);
+    --highlight-text-color: var(--color-accent-text);
+
+    color-scheme: light;
+}
+
+/* Dark theme: set by index.html (before first paint) and by the theme switch. */
+:root[data-theme='dark'] {
+    --color-primary-soft: rgba(59, 130, 246, 0.16);
+    --color-accent-text: #8fb2ff;
+    --color-accent-icon: #6e9bff;
+
+    --color-gray-900: #f2f4f7;
+    --color-gray-800: #e4e7ec;
+    --color-gray-700: #c9ced6;
+    --color-gray-600: #a6aebb;
+    --color-gray-500: #8d96a5;
+    --color-gray-400: #667080;
+    --color-gray-300: #343d4c;
+    --color-gray-200: #262e3b;
+    --color-gray-150: #1f2631;
+    --color-gray-125: #1b212b;
+    --color-gray-100: #212835;
+    --color-gray-50: #11161e;
+    --color-gray-25: #1a202a;
+    --color-background: #0d1118;
+    --color-surface: #151a23;
+
+    --color-danger: #f87171;
+    --color-danger-soft: rgba(248, 113, 113, 0.12);
+    --color-success-soft: #173328;
+    --color-success-text: #7fd3ae;
+    --color-warning-soft: #3a2814;
+    --color-warning-text: #f3b275;
+    --color-toast: #262e3b;
+
+    --avatar-1-bg: #1e2a47;
+    --avatar-1-fg: #9db8ff;
+    --avatar-2-bg: #173328;
+    --avatar-2-fg: #7fd3ae;
+    --avatar-3-bg: #3a2814;
+    --avatar-3-fg: #f3b275;
+    --avatar-4-bg: #2a2142;
+    --avatar-4-fg: #bba3f0;
+    --avatar-5-bg: #3a1a25;
+    --avatar-5-fg: #f59ab5;
+    --avatar-6-bg: #142f38;
+    --avatar-6-fg: #7ecbe3;
+
+    --logo-ink-start: #ffffff;
+    --logo-ink-end: #ffffff;
+
+    --overlay: rgba(3, 6, 12, 0.65);
+
+    color-scheme: dark;
 }

@@ -20,13 +20,13 @@
 }
 
 .success {
-    background: #e3f4ec;
-    color: #1f7a55;
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
 }
 
 .warning {
-    background: #fdf0e3;
-    color: #a9520f;
+    background: var(--color-warning-soft);
+    color: var(--color-warning-text);
 }
 
 .danger {
@@ -36,7 +36,7 @@
 
 .primary {
     background: var(--color-primary-soft);
-    color: var(--color-primary-hover);
+    color: var(--color-accent-text);
 }
 
 .neutral {
