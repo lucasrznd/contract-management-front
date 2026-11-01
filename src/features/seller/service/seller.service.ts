@@ -1,15 +1,20 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
 import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
+import { maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
+import type { Page, PageRequest } from '@/shared/types/api.types';
 import type { Seller, SellerFormValues } from '../types/seller.types';
 
 export const isSellerPhotoUploadEnabled = import.meta.env.VITE_SELLER_PHOTO_UPLOAD === 'true';
 
 const sellerKeys = {
-    all: ['sellers'] as const,
+    list: (request: PageRequest) => ['sellers', 'list', request] as const,
 };
 
-const findAll = async () => {
-    const response = await api.get<Seller[]>('/sellers');
+const findAll = async (request: PageRequest) => {
+    const response = await api.get<Page<Seller>>('/sellers', {
+        params: toPageParams({ ...request, text: maskedNumberAsDigits(request.text) }),
+    });
     return response.data;
 };
 
@@ -31,10 +36,13 @@ const uploadPhoto = async ({ file }: { file: File }) => {
     return response.data.url;
 };
 
-export function useSellerFindAll() {
+/** A page of sellers; the previous page stays on screen while the next one loads. */
+export function useSellerFindAll(request: PageRequest = {}, { enabled = true } = {}) {
     return useApiQuery({
-        queryKey: sellerKeys.all,
-        queryFn: findAll,
+        queryKey: sellerKeys.list(request),
+        queryFn: () => findAll(request),
+        enabled,
+        placeholderData: keepPreviousData,
         refetchInterval: REFETCH_INTERVAL,
         errorMessage: 'Não foi possível carregar os vendedores.',
     });

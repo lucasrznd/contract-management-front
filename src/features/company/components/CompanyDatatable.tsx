@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -9,6 +8,7 @@ import UserAvatar from '@/shared/components/ui/UserAvatar';
 import { tableStyles, useDataTableState } from '@/shared/components/ui/dataTable';
 import { BuildingIcon, MailIcon, MapPinIcon, PencilIcon, PlusIcon, TrashIcon } from '@/shared/components/icons';
 import { useCompanyFindAll } from '../service/company.service';
+import { isPage } from '@/shared/api/pagination';
 import {
     buildEncodedStringAddress,
     formatCode,
@@ -16,7 +16,6 @@ import {
     maskCpf,
     maskPhone,
 } from '@/shared/helpers/stringUtils.helper';
-import { matchesSearch } from '@/shared/helpers/search.helper';
 import type { Company } from '../types/company.types';
 
 interface CompanyDatatableProps {
@@ -33,22 +32,10 @@ const openOnMaps = (company: Company) =>
     );
 
 export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDatatableProps) {
-    const { data, isLoading, isError } = useCompanyFindAll();
-    const { search, changeSearch, tableProps } = useDataTableState<Company[]>('id');
-
-    // A misconfigured API URL answers with index.html instead of a list.
-    const companies = Array.isArray(data) ? data : undefined;
-    const filtered = useMemo(
-        () =>
-            (companies ?? []).filter((company) =>
-                matchesSearch(search, {
-                    text: [company.tradeName, company.businessName, company.city, company.email],
-                    digits: [company.registrationNumber, company.cpf, company.phoneNumber],
-                    id: company.id,
-                }),
-            ),
-        [companies, search],
-    );
+    const { search, committedSearch, changeSearch, request, tableProps } = useDataTableState<Company[]>('id');
+    const { data, isLoading, isError, isPlaceholderData } = useCompanyFindAll(request);
+    const page = isPage<Company>(data) ? data : undefined;
+    const total = page?.page.totalElements ?? 0;
 
     const newCompanyButton = <Button label="Nova empresa" icon={<PlusIcon />} onClick={onNew} />;
 
@@ -126,20 +113,20 @@ export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDat
     return (
         <PageCard
             title="Empresas"
-            count={companies?.length}
+            count={page?.page.totalElements}
             actions={
                 <>
-                    <SearchInput value={search} onChange={changeSearch} placeholder="Nome, CNPJ ou código" />
+                    <SearchInput value={search} onChange={changeSearch} placeholder="Nome, CNPJ, CPF ou cidade" />
                     {newCompanyButton}
                 </>
             }
         >
             <ListContent
                 isLoading={isLoading}
-                isError={isError || !companies}
-                total={companies?.length ?? 0}
-                visible={filtered.length}
-                search={search}
+                isError={isError || !page}
+                isEmpty={!committedSearch && !total}
+                noResults={!!committedSearch && !total}
+                search={committedSearch}
                 onClearSearch={() => changeSearch('')}
                 errorSubject="as empresas"
                 empty={{
@@ -148,9 +135,15 @@ export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDat
                     description: 'Cadastre a primeira empresa para poder criar contratos com ela.',
                     action: newCompanyButton,
                 }}
-                noResultsHint="Confira a grafia ou busque pelo CNPJ, telefone ou código."
+                noResultsHint="Confira a grafia ou busque pela razão social, CNPJ, CPF ou cidade."
             >
-                <DataTable value={filtered} dataKey="id" tableStyle={{ minWidth: '60rem' }} {...tableProps}>
+                <DataTable
+                    value={page?.content}
+                    dataKey="id"
+                    tableStyle={{ minWidth: '60rem' }}
+                    loading={isPlaceholderData}
+                    {...tableProps(page)}
+                >
                     <Column
                         field="id"
                         header="Código"

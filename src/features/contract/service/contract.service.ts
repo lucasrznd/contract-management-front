@@ -1,9 +1,12 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
 import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
+import { toPageParams } from '@/shared/api/pagination';
+import type { Page, PageRequest } from '@/shared/types/api.types';
 import type { Contract, ContractFilter, ContractFormValues, DigitalDocument } from '../types/contract.types';
 
 const contractKeys = {
-    all: ['contracts'] as const,
+    list: (request: PageRequest) => ['contracts', 'list', request] as const,
     filter: (filter: ContractFilter | null) => ['contracts', 'filter', filter?.kind, filter?.params] as const,
     digitalDoc: (token: string | null | undefined) => ['contracts', 'digital-doc', token] as const,
     count: ['contractsQuantity'] as const,
@@ -12,8 +15,11 @@ const contractKeys = {
     estimatedRevenue: ['estimatedRevenue'] as const,
 };
 
-const findAll = async () => {
-    const response = await api.get<Contract[]>('/contracts');
+/** The response flattens company and seller; the API sorts by the entity paths. */
+const sortFields = { companyTradeName: 'clientCompany.tradeName', sellerName: 'seller.name' };
+
+const findAll = async (request: PageRequest) => {
+    const response = await api.get<Page<Contract>>('/contracts', { params: toPageParams(request, sortFields) });
     return response.data;
 };
 
@@ -71,10 +77,13 @@ const downloadPdf = async ({ id }: { id: number }) => {
     fileLink.remove();
 };
 
-export function useContractFindAll() {
+/** A page of contracts; the previous page stays on screen while the next one loads. */
+export function useContractFindAll(request: PageRequest = {}, { enabled = true } = {}) {
     return useApiQuery({
-        queryKey: contractKeys.all,
-        queryFn: findAll,
+        queryKey: contractKeys.list(request),
+        queryFn: () => findAll(request),
+        enabled,
+        placeholderData: keepPreviousData,
         refetchInterval: REFETCH_INTERVAL,
         errorMessage: 'Não foi possível carregar os contratos.',
     });

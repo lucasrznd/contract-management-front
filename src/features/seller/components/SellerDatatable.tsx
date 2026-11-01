@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -9,8 +8,8 @@ import UserAvatar from '@/shared/components/ui/UserAvatar';
 import { tableStyles, useDataTableState } from '@/shared/components/ui/dataTable';
 import { PencilIcon, PhoneIcon, PlusIcon, TrashIcon, UserPlusIcon } from '@/shared/components/icons';
 import { useSellerFindAll } from '../service/seller.service';
+import { isPage } from '@/shared/api/pagination';
 import { formatCode, maskPhone } from '@/shared/helpers/stringUtils.helper';
-import { matchesSearch } from '@/shared/helpers/search.helper';
 import type { Seller } from '../types/seller.types';
 
 interface SellerDatatableProps {
@@ -20,18 +19,10 @@ interface SellerDatatableProps {
 }
 
 export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatatableProps) {
-    const { data, isLoading, isError } = useSellerFindAll();
-    const { search, changeSearch, tableProps } = useDataTableState<Seller[]>('id');
-
-    // A misconfigured API URL answers with index.html instead of a list.
-    const sellers = Array.isArray(data) ? data : undefined;
-    const filtered = useMemo(
-        () =>
-            (sellers ?? []).filter((seller) =>
-                matchesSearch(search, { text: [seller.name], digits: [seller.phoneNumber], id: seller.id }),
-            ),
-        [sellers, search],
-    );
+    const { search, committedSearch, changeSearch, request, tableProps } = useDataTableState<Seller[]>('id');
+    const { data, isLoading, isError, isPlaceholderData } = useSellerFindAll(request);
+    const page = isPage<Seller>(data) ? data : undefined;
+    const total = page?.page.totalElements ?? 0;
 
     const newSellerButton = <Button label="Novo vendedor" icon={<PlusIcon />} onClick={onNew} />;
 
@@ -71,20 +62,20 @@ export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatat
     return (
         <PageCard
             title="Vendedores"
-            count={sellers?.length}
+            count={page?.page.totalElements}
             actions={
                 <>
-                    <SearchInput value={search} onChange={changeSearch} placeholder="Nome, telefone ou código" />
+                    <SearchInput value={search} onChange={changeSearch} placeholder="Nome ou telefone" />
                     {newSellerButton}
                 </>
             }
         >
             <ListContent
                 isLoading={isLoading}
-                isError={isError || !sellers}
-                total={sellers?.length ?? 0}
-                visible={filtered.length}
-                search={search}
+                isError={isError || !page}
+                isEmpty={!committedSearch && !total}
+                noResults={!!committedSearch && !total}
+                search={committedSearch}
                 onClearSearch={() => changeSearch('')}
                 errorSubject="os vendedores"
                 empty={{
@@ -93,9 +84,9 @@ export default function SellerDatatable({ onNew, onEdit, onDelete }: SellerDatat
                     description: 'Cadastre o primeiro vendedor para poder vinculá-lo aos contratos.',
                     action: newSellerButton,
                 }}
-                noResultsHint="Confira a grafia ou busque pelo telefone ou código."
+                noResultsHint="Confira a grafia ou busque pelo telefone."
             >
-                <DataTable value={filtered} dataKey="id" {...tableProps}>
+                <DataTable value={page?.content} dataKey="id" loading={isPlaceholderData} {...tableProps(page)}>
                     <Column
                         field="id"
                         header="Código"

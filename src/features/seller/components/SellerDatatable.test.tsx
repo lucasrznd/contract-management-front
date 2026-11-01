@@ -1,9 +1,10 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { api } from '@/shared/api/api';
 import { expect, test, vi } from 'vitest';
 import SellerDatatable from './SellerDatatable';
 import { renderWithProviders } from '@/test/renderWithProviders';
+import { pageOf } from '@/test/pageOf';
 
 const sellers = [
     { id: 1, name: 'Jorge Silva', phoneNumber: '19993818293', urlImage: '' },
@@ -17,52 +18,78 @@ function renderTable() {
     return props;
 }
 
-const rowNames = () =>
-    screen
-        .getAllByRole('row')
-        .slice(1)
-        .map((row) => within(row).getAllByRole('cell')[1].textContent);
+/** Params of the last GET /sellers. */
+const lastParams = (get: ReturnType<typeof vi.spyOn>) => get.mock.lastCall![1].params;
 
-test('lists sellers with code, masked phone and count', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: sellers });
+test('lists the first page with code, masked phone and the total count', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers, { totalElements: 42 }) });
     renderTable();
 
     expect(await screen.findByText('Jorge Silva')).toBeInTheDocument();
     expect(screen.getByText('001')).toBeInTheDocument();
     expect(screen.getByText('(19) 3381-5555')).toBeInTheDocument();
     const title = screen.getByRole('heading', { name: 'Vendedores' });
-    expect(within(title.parentElement!).getByText('3')).toBeInTheDocument();
+    expect(within(title.parentElement!).getByText('42')).toBeInTheDocument();
+    expect(get).toHaveBeenCalledWith('/sellers', {
+        params: { text: undefined, page: 0, size: 10, sort: ['id,asc'] },
+    });
 });
 
-test.each([
-    ['patricia', 'Patrícia Gomes'],
-    ['9123', 'Patrícia Gomes'],
-    ['3381-5555', 'Ricardo Alves'],
-])('searching %j finds %s', async (query, expected) => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: sellers });
+test('searches on the API once the user stops typing, from the first page', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers, { totalElements: 42 }) });
+    renderTable();
+    await screen.findByText('Jorge Silva');
+    await userEvent.click(screen.getByRole('button', { name: 'Próxima página' }));
+    await waitFor(() => expect(lastParams(get).page).toBe(1));
+    get.mockClear();
+
+    await userEvent.type(screen.getByRole('searchbox'), 'patricia');
+
+    await waitFor(() => expect(lastParams(get)).toMatchObject({ text: 'patricia', page: 0 }));
+    // One request for the whole word, not one per keystroke.
+    expect(get).toHaveBeenCalledTimes(1);
+});
+
+test('sends masked phone numbers as digits', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers) });
     renderTable();
     await screen.findByText('Jorge Silva');
 
-    await userEvent.type(screen.getByRole('searchbox'), query);
+    await userEvent.type(screen.getByRole('searchbox'), '3381-5555');
 
-    expect(rowNames()).toEqual([expect.stringContaining(expected)]);
+    await waitFor(() => expect(lastParams(get).text).toBe('33815555'));
+});
+
+test('sorting a column asks the API for that order', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers) });
+    renderTable();
+    await screen.findByText('Jorge Silva');
+
+    await userEvent.click(screen.getByText('Vendedor'));
+    await waitFor(() => expect(lastParams(get).sort).toEqual(['name,asc', 'id,asc']));
+
+    await userEvent.click(screen.getByText('Vendedor'));
+    await waitFor(() => expect(lastParams(get).sort).toEqual(['name,desc', 'id,asc']));
 });
 
 test('shows a no-results state that clears the search', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: sellers });
+    const get = vi.spyOn(api, 'get').mockImplementation(async (_url, config) => ({
+        data: pageOf(config?.params.text ? [] : sellers),
+    }));
     renderTable();
     await screen.findByText('Jorge Silva');
 
     await userEvent.type(screen.getByRole('searchbox'), 'xyz');
-    expect(screen.getByRole('heading', { name: 'Nenhum resultado para “xyz”' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Nenhum resultado para “xyz”' })).toBeInTheDocument();
 
     // The search box's clear (x) button has the same name.
     await userEvent.click(screen.getByText('Limpar busca'));
     expect(await screen.findByText('Jorge Silva')).toBeInTheDocument();
+    expect(lastParams(get).text).toBeUndefined();
 });
 
 test('shows an empty state when there are no sellers', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: [] });
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf([]) });
     const { onNew } = renderTable();
 
     expect(await screen.findByRole('heading', { name: 'Nenhum vendedor cadastrado' })).toBeInTheDocument();
@@ -70,8 +97,15 @@ test('shows an empty state when there are no sellers', async () => {
     expect(onNew).toHaveBeenCalled();
 });
 
+test('shows the error state when the API does not answer a page', async () => {
+    vi.spyOn(api, 'get').mockResolvedValue({ data: '<!doctype html>' });
+    renderTable();
+
+    expect(await screen.findByRole('heading', { name: 'Erro de conexão com servidor.' })).toBeInTheDocument();
+});
+
 test('row actions edit and delete the seller', async () => {
-    vi.spyOn(api, 'get').mockResolvedValue({ data: sellers });
+    vi.spyOn(api, 'get').mockResolvedValue({ data: pageOf(sellers) });
     const { onEdit, onDelete } = renderTable();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Editar Jorge Silva' }));

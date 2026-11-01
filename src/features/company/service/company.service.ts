@@ -1,14 +1,19 @@
+import { keepPreviousData } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
 import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
+import { maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
+import type { Page, PageRequest } from '@/shared/types/api.types';
 import type { Company, CompanyFormValues } from '../types/company.types';
 
 const companyKeys = {
-    all: ['companies'] as const,
+    list: (request: PageRequest) => ['companies', 'list', request] as const,
     count: ['companiesQuantity'] as const,
 };
 
-const findAll = async () => {
-    const response = await api.get<Company[]>('/companies');
+const findAll = async (request: PageRequest) => {
+    const response = await api.get<Page<Company>>('/companies', {
+        params: toPageParams({ ...request, text: maskedNumberAsDigits(request.text) }),
+    });
     return response.data;
 };
 
@@ -26,10 +31,13 @@ const update = ({ id, data }: { id: number; data: CompanyFormValues }) => api.pu
 
 const remove = ({ id }: { id: number }) => api.delete(`/companies/${id}`);
 
-export function useCompanyFindAll() {
+/** A page of companies; the previous page stays on screen while the next one loads. */
+export function useCompanyFindAll(request: PageRequest = {}, { enabled = true } = {}) {
     return useApiQuery({
-        queryKey: companyKeys.all,
-        queryFn: findAll,
+        queryKey: companyKeys.list(request),
+        queryFn: () => findAll(request),
+        enabled,
+        placeholderData: keepPreviousData,
         refetchInterval: REFETCH_INTERVAL,
         errorMessage: 'Não foi possível carregar as empresas.',
     });

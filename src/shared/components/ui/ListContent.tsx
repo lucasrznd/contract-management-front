@@ -9,9 +9,11 @@ interface ListContentProps {
     isLoading: boolean;
     /** Request failed, or the API answered something that isn't a list. */
     isError: boolean;
-    total: number;
-    /** Rows left after the search. */
-    visible: number;
+    /** Nothing registered yet (no search applied and no rows). */
+    isEmpty: boolean;
+    /** A search is applied and nothing matched it. */
+    noResults: boolean;
+    /** The text searched, quoted in the no-results title. */
     search: string;
     onClearSearch: () => void;
     /** e.g. "os vendedores", for "Não foi possível carregar os vendedores." */
@@ -44,11 +46,11 @@ export default function ListContent(props: ListContentProps) {
         );
     }
 
-    if (!props.total) {
+    if (props.isEmpty) {
         return <EmptyState {...props.empty} />;
     }
 
-    if (!props.visible) {
+    if (props.noResults) {
         return (
             <EmptyState
                 tone="neutral"
