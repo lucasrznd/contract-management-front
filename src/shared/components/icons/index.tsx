@@ -242,16 +242,6 @@ export const FileOffIcon = createIcon(
 
 export const FlagIcon = createIcon(<path d="M5 21V4M5 4h11l-2 4 2 4H5" />, 1.9);
 
-export const SidebarToggleIcon = createIcon(
-    <>
-        <rect x="3" y="4" width="18" height="16" rx="2" />
-        <path d="M9 4v16M15 10l-2 2 2 2" />
-    </>,
-    1.75,
-);
-
-export const MenuIcon = createIcon(<path d="M4 6h16M4 12h16M4 18h16" />, 2);
-
 export const SunIcon = createIcon(
     <>
         <circle cx="12" cy="12" r="4.2" />

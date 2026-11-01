@@ -1,23 +1,37 @@
-import { useEffect, useRef, useState, type ComponentType } from 'react';
+import { useEffect, useRef, useState, type ForwardRefExoticComponent, type RefAttributes } from 'react';
 import { Link, NavLink } from 'react-router';
-import {
-    BuildingIcon,
-    FolderIcon,
-    MenuIcon,
-    SidebarToggleIcon,
-    UsersIcon,
-    type IconProps,
-} from '@/shared/components/icons';
+import { LazyMotion, MotionConfig } from 'motion/react';
+import { BriefcaseBusinessIcon } from '@/shared/components/icons/animated/briefcase-business';
+import { FilePenLineIcon } from '@/shared/components/icons/animated/file-pen-line';
+import { MenuIcon } from '@/shared/components/icons/animated/menu';
+import { PanelLeftCloseIcon } from '@/shared/components/icons/animated/panel-left-close';
+import { PanelLeftOpenIcon } from '@/shared/components/icons/animated/panel-left-open';
+import { UsersIcon } from '@/shared/components/icons/animated/users';
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
 import BrandLogo from './BrandLogo';
 import ThemeSwitch from './ThemeSwitch';
 import styles from './AppSidenav.module.css';
 
-const navItems: { to: string; label: string; icon: ComponentType<IconProps> }[] = [
-    { to: '/contratos', label: 'Contratos', icon: FolderIcon },
-    { to: '/empresas', label: 'Empresas', icon: BuildingIcon },
+interface AnimatedIconHandle {
+    startAnimation: () => void;
+    stopAnimation: () => void;
+}
+
+type AnimatedIcon = ForwardRefExoticComponent<
+    { size?: number; strokeWidth?: number; className?: string } & RefAttributes<AnimatedIconHandle>
+>;
+
+const navItems: { to: string; label: string; icon: AnimatedIcon }[] = [
+    { to: '/contratos', label: 'Contratos', icon: FilePenLineIcon },
+    { to: '/empresas', label: 'Empresas', icon: BriefcaseBusinessIcon },
     { to: '/vendedores', label: 'Vendedores', icon: UsersIcon },
 ];
+
+// The icons' animation engine is downloaded after the first render (they show up static until then).
+const loadMotionFeatures = () => import('@/shared/components/icons/animated/motionFeatures').then((mod) => mod.default);
+
+// The design's stroke, thinner than lucide's default 2.
+const ICON_STROKE = 1.75;
 
 const COLLAPSED_KEY = 'egc-nav';
 // Keep in sync with the media queries in AppSidenav.module.css and AppLayout.module.css.
@@ -30,6 +44,42 @@ function readCollapsed() {
     } catch {
         return false;
     }
+}
+
+/** Plays an animated icon while the pointer is over its whole item, not only over the icon. */
+function useIconAnimation() {
+    const ref = useRef<AnimatedIconHandle>(null);
+    return {
+        ref,
+        hover: {
+            onMouseEnter: () => ref.current?.startAnimation(),
+            onMouseLeave: () => ref.current?.stopAnimation(),
+        },
+    };
+}
+
+function NavItem({
+    to,
+    label,
+    icon: Icon,
+    expanded,
+    onNavigate,
+}: (typeof navItems)[number] & { expanded: boolean; onNavigate: () => void }) {
+    const { ref, hover } = useIconAnimation();
+
+    return (
+        <NavLink
+            to={to}
+            title={expanded ? undefined : label}
+            aria-label={expanded ? undefined : label}
+            className={({ isActive }) => cx(styles.item, isActive && styles.active)}
+            onClick={onNavigate}
+            {...hover}
+        >
+            <Icon ref={ref} size={18} strokeWidth={ICON_STROKE} className={styles.itemIcon} />
+            {expanded && <span>{label}</span>}
+        </NavLink>
+    );
 }
 
 function cx(...classes: (string | false | undefined)[]) {
@@ -46,6 +96,8 @@ export default function AppSidenav() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const asideRef = useRef<HTMLElement>(null);
     const menuButtonRef = useRef<HTMLButtonElement>(null);
+    const menuIcon = useIconAnimation();
+    const toggleIcon = useIconAnimation();
 
     const isDrawerOpen = isMobile && drawerOpen;
     // The drawer always shows labels; only the desktop sidebar collapses.
@@ -91,82 +143,85 @@ export default function AppSidenav() {
 
     const toggleLabel = isMobile ? 'Fechar menu' : collapsed ? 'Expandir menu' : 'Recolher menu';
 
+    // Shows the "open" panel icon only while the desktop sidebar is collapsed.
+    const ToggleIcon = !isMobile && collapsed ? PanelLeftOpenIcon : PanelLeftCloseIcon;
+
     return (
-        <>
-            {isMobile && (
-                <header className={styles.topbar}>
-                    <button
-                        ref={menuButtonRef}
-                        type="button"
-                        className={styles.menuButton}
-                        aria-label="Abrir menu"
-                        aria-expanded={isDrawerOpen}
-                        aria-controls={DRAWER_ID}
-                        onClick={() => setDrawerOpen(true)}
-                    >
-                        <MenuIcon size={20} />
-                    </button>
-                    <Link to="/" className={styles.topbarBrand}>
-                        <BrandLogo className={styles.topbarLogo} />
-                    </Link>
-                </header>
-            )}
-
-            {isMobile && (
-                <div
-                    className={cx(styles.overlay, isDrawerOpen && styles.overlayVisible)}
-                    onClick={closeDrawer}
-                    aria-hidden="true"
-                />
-            )}
-
-            <aside
-                ref={asideRef}
-                id={DRAWER_ID}
-                aria-label="Menu principal"
-                className={cx(
-                    styles.sidenav,
-                    !expanded && styles.collapsed,
-                    isMobile && styles.drawer,
-                    isDrawerOpen && styles.drawerOpen,
-                )}
-            >
-                <div className={styles.brandRow}>
-                    <Link to="/" className={styles.brand} onClick={closeDrawer}>
-                        <BrandLogo className={styles.logo} />
-                    </Link>
-                </div>
-
-                <nav className={styles.nav} aria-label="Principal">
-                    {navItems.map(({ to, label, icon: Icon }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            title={expanded ? undefined : label}
-                            aria-label={expanded ? undefined : label}
-                            className={({ isActive }) => cx(styles.item, isActive && styles.active)}
-                            onClick={closeDrawer}
+        // Icons skip their animations when the OS asks for reduced motion.
+        <MotionConfig reducedMotion="user">
+            <LazyMotion features={loadMotionFeatures} strict>
+                {isMobile && (
+                    <header className={styles.topbar}>
+                        <button
+                            ref={menuButtonRef}
+                            type="button"
+                            className={styles.menuButton}
+                            aria-label="Abrir menu"
+                            aria-expanded={isDrawerOpen}
+                            aria-controls={DRAWER_ID}
+                            onClick={() => setDrawerOpen(true)}
+                            {...menuIcon.hover}
                         >
-                            <Icon size={18} className={styles.itemIcon} />
-                            {expanded && <span>{label}</span>}
-                        </NavLink>
-                    ))}
-                </nav>
+                            <MenuIcon ref={menuIcon.ref} size={20} className={styles.menuIcon} />
+                        </button>
+                        <Link to="/" className={styles.topbarBrand}>
+                            <BrandLogo className={styles.topbarLogo} />
+                        </Link>
+                    </header>
+                )}
 
-                <div className={styles.footer}>
-                    <ThemeSwitch showLabel={expanded} />
-                    <button
-                        type="button"
-                        className={styles.item}
-                        title={toggleLabel}
-                        aria-label={toggleLabel}
-                        onClick={isMobile ? closeDrawer : toggleCollapsed}
-                    >
-                        <SidebarToggleIcon size={18} className={cx(styles.itemIcon, styles.toggleIcon)} />
-                        {expanded && <span>{isMobile ? 'Fechar menu' : 'Recolher menu'}</span>}
-                    </button>
-                </div>
-            </aside>
-        </>
+                {isMobile && (
+                    <div
+                        className={cx(styles.overlay, isDrawerOpen && styles.overlayVisible)}
+                        onClick={closeDrawer}
+                        aria-hidden="true"
+                    />
+                )}
+
+                <aside
+                    ref={asideRef}
+                    id={DRAWER_ID}
+                    aria-label="Menu principal"
+                    className={cx(
+                        styles.sidenav,
+                        !expanded && styles.collapsed,
+                        isMobile && styles.drawer,
+                        isDrawerOpen && styles.drawerOpen,
+                    )}
+                >
+                    <div className={styles.brandRow}>
+                        <Link to="/" className={styles.brand} onClick={closeDrawer}>
+                            <BrandLogo className={styles.logo} />
+                        </Link>
+                    </div>
+
+                    <nav className={styles.nav} aria-label="Principal">
+                        {navItems.map((item) => (
+                            <NavItem key={item.to} {...item} expanded={expanded} onNavigate={closeDrawer} />
+                        ))}
+                    </nav>
+
+                    <div className={styles.footer}>
+                        <ThemeSwitch showLabel={expanded} />
+                        <button
+                            type="button"
+                            className={styles.item}
+                            title={toggleLabel}
+                            aria-label={toggleLabel}
+                            onClick={isMobile ? closeDrawer : toggleCollapsed}
+                            {...toggleIcon.hover}
+                        >
+                            <ToggleIcon
+                                ref={toggleIcon.ref}
+                                size={18}
+                                strokeWidth={ICON_STROKE}
+                                className={styles.itemIcon}
+                            />
+                            {expanded && <span>{isMobile ? 'Fechar menu' : 'Recolher menu'}</span>}
+                        </button>
+                    </div>
+                </aside>
+            </LazyMotion>
+        </MotionConfig>
     );
 }

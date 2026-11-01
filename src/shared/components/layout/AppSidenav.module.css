@@ -100,8 +100,10 @@
     font-weight: 600;
 }
 
-.itemIcon {
+.itemIcon,
+.menuIcon {
     flex-shrink: 0;
+    display: flex;
 }
 
 .footer {
@@ -123,14 +125,6 @@
 
 .footer > .item:hover {
     color: var(--color-gray-900);
-}
-
-.toggleIcon {
-    transition: transform 0.2s ease;
-}
-
-.collapsed .toggleIcon {
-    transform: scaleX(-1);
 }
 
 /* ---------- Top bar + drawer (mobile) ---------- */
@@ -225,7 +219,6 @@
 @media (prefers-reduced-motion: reduce) {
     .sidenav,
     .brand,
-    .toggleIcon,
     .overlay,
     .overlayVisible {
         transition: none;
