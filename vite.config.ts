@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import svgr from 'vite-plugin-svgr';
 import path from 'node:path';
 
 // Lara (PrimeReact's theme) hardcodes its grays and blues. Swapping them for the app's tokens makes every
@@ -66,6 +67,8 @@ export default defineConfig(({ command, mode }) => {
         plugins: [
             react(),
             laraThemeTokens(),
+            // `import Logo from './logo.svg?react'` renders the SVG inline, so CSS variables (theme) reach its fills.
+            svgr({ svgrOptions: { dimensions: false } }),
         ],
         resolve: {
             alias: { '@': path.resolve(import.meta.dirname, 'src') },
