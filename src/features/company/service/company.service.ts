@@ -1,12 +1,13 @@
 import { keepPreviousData } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
-import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
-import { maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
+import { useApiFetch, useApiMutation, useApiQuery } from '@/shared/api/api.service';
+import { isPage, maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
 import type { Page, PageRequest } from '@/shared/types/api.types';
 import type { Company, CompanyFormValues } from '../types/company.types';
 
 const companyKeys = {
     list: (request: PageRequest) => ['companies', 'list', request] as const,
+    search: (text: string) => ['companies', 'search', text] as const,
     count: ['companiesQuantity'] as const,
 };
 
@@ -50,6 +51,24 @@ export function useCompanyCount() {
         refetchInterval: REFETCH_INTERVAL,
         errorMessage: 'Não foi possível carregar o total de empresas.',
     });
+}
+
+/** How many matches a type-ahead field lists. */
+const SEARCH_SIZE = 20;
+
+/** Companies matching the text, by trade name, for type-ahead fields. Recent answers come from the cache. */
+export function useCompanySearch() {
+    return useApiFetch((text: string) => {
+        const request: PageRequest = { text, size: SEARCH_SIZE, sort: { field: 'tradeName', direction: 'asc' } };
+        return {
+            queryKey: companyKeys.search(text),
+            queryFn: async () => {
+                const data = await findAll(request);
+                return isPage<Company>(data) ? data.content : [];
+            },
+            staleTime: 30_000,
+        };
+    }, 'Não foi possível buscar as empresas.');
 }
 
 export function useCompanyCreate() {

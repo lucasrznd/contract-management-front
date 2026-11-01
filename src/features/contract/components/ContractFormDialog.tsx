@@ -27,8 +27,8 @@ import {
     WalletIcon,
 } from '@/shared/components/icons';
 import { useContractCreate, useContractUpdate } from '../service/contract.service';
-import { useCompanyFindAll } from '@/features/company/service/company.service';
-import { useSellerFindAll } from '@/features/seller/service/seller.service';
+import { useCompanySearch } from '@/features/company/service/company.service';
+import { useSellerSearch } from '@/features/seller/service/seller.service';
 import { formatCode, parseDate, parseMoney } from '@/shared/helpers/stringUtils.helper';
 import { invalidProps, textFieldProps } from '@/shared/helpers/form.helper';
 import { contractFormSchema, type ContractFormData, type ContractFormFields } from '../schema/ContractFormSchema';
@@ -77,10 +77,8 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
     const toast = useToast();
     const { mutate: createContract, isPending: isCreating } = useContractCreate();
     const { mutate: updateContract, isPending: isUpdating } = useContractUpdate();
-    const { data: companiesData } = useCompanyFindAll();
-    const { data: sellersData } = useSellerFindAll();
-    const companies = Array.isArray(companiesData) ? companiesData : [];
-    const sellers = Array.isArray(sellersData) ? sellersData : [];
+    const searchCompanies = useCompanySearch();
+    const searchSellers = useSellerSearch();
     const isEditing = contract !== null;
 
     const form = useForm<ContractFormFields, unknown, ContractFormData>({
@@ -88,9 +86,9 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
         // Errors show up after leaving the field or trying to save, not while typing for the first time.
         mode: 'onTouched',
         defaultValues: {
-            // The API returns names only, so the records are looked up in the loaded lists.
-            clientCompany: companies.find((c) => c.tradeName === contract?.companyTradeName) ?? null,
-            seller: sellers.find((s) => s.name === contract?.sellerName) ?? null,
+            // Filled in by the lookup below when editing.
+            clientCompany: null,
+            seller: null,
             advertisingOrder: contract?.advertisingOrder ?? '',
             quantitySpotDay: contract?.quantitySpotDay ?? null,
             spotDuration: contract ? Number(contract.spotDuration).toFixed(2) : '',
@@ -133,19 +131,20 @@ export default function ContractFormDialog({ visible, onHide, contract }: Contra
         );
     };
 
-    // When editing before the company/seller lists have loaded, fill them in once they arrive.
+    // The contract only carries the company's and seller's names: search by them and take the exact match,
+    // unless the user picked one in the meantime.
     useEffect(() => {
         if (!contract) return;
-        if (!getValues('clientCompany') && companies.length) {
-            const company = companies.find((c) => c.tradeName === contract.companyTradeName);
-            if (company) setValue('clientCompany', company);
-        }
-        if (!getValues('seller') && sellers.length) {
-            const seller = sellers.find((s) => s.name === contract.sellerName);
-            if (seller) setValue('seller', seller);
-        }
-        // Only reacts to the lists arriving.
-    }, [companies.length, sellers.length]);
+        searchCompanies(contract.companyTradeName).then((companies) => {
+            const company = companies?.find((c) => c.tradeName === contract.companyTradeName);
+            if (company && !getValues('clientCompany')) setValue('clientCompany', company);
+        });
+        searchSellers(contract.sellerName).then((sellers) => {
+            const seller = sellers?.find((s) => s.name === contract.sellerName);
+            if (seller && !getValues('seller')) setValue('seller', seller);
+        });
+        // Once per contract: the dialog is remounted for each one.
+    }, []);
 
     const startDate = form.watch('startDate');
     const error = (name: keyof ContractFormFields) => errors[name]?.message;

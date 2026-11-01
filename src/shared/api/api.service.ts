@@ -4,6 +4,7 @@ import {
     useQuery,
     useQueryClient,
     type DefaultError,
+    type FetchQueryOptions,
     type QueryKey,
     type UseMutationOptions,
     type UseQueryOptions,
@@ -42,6 +43,27 @@ export function useApiQuery<TData, TKey extends QueryKey = QueryKey>({
     }, [query.errorUpdatedAt]);
 
     return query;
+}
+
+/**
+ * Imperative lookup for type-ahead fields: `const search = useApiFetch(...); await search(text)`.
+ * Goes through the query cache, shows a toast and answers `undefined` when the request fails.
+ */
+export function useApiFetch<TArg, TData>(
+    options: (arg: TArg) => FetchQueryOptions<TData, DefaultError, TData, QueryKey>,
+    errorMessage?: string,
+) {
+    const toast = useToast();
+    const queryClient = useQueryClient();
+
+    return async (arg: TArg): Promise<TData | undefined> => {
+        try {
+            return await queryClient.fetchQuery(options(arg));
+        } catch (error) {
+            toast.error(apiErrorMessage(error, errorMessage));
+            return undefined;
+        }
+    };
 }
 
 interface ApiMutationOptions {

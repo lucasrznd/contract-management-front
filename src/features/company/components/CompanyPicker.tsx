@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { AutoComplete } from 'primereact/autocomplete';
-import { useCompanyFindAll } from '../service/company.service';
-import { normalizeSearch } from '@/shared/helpers/stringUtils.helper';
+import { useCompanySearch } from '../service/company.service';
+import { useSuggestions } from '@/shared/hooks/useSuggestions';
 import type { Company } from '../types/company.types';
 
 interface CompanyPickerProps {
@@ -13,24 +12,21 @@ interface CompanyPickerProps {
     'aria-describedby'?: string;
 }
 
-/** Type-ahead over the registered companies, by trade name. */
+/** Type-ahead over the registered companies, searched by the API. */
 export default function CompanyPicker({ value, onChange, ...props }: CompanyPickerProps) {
-    const { data } = useCompanyFindAll();
-    const companies = Array.isArray(data) ? data : [];
-    const [suggestions, setSuggestions] = useState<Company[]>([]);
+    const suggestions = useSuggestions(useCompanySearch());
 
     return (
         <AutoComplete
             {...props}
+            {...suggestions}
             value={value}
-            suggestions={suggestions}
             field="tradeName"
             forceSelection
-            completeMethod={(e) =>
-                setSuggestions(companies.filter((c) => normalizeSearch(c.tradeName).includes(normalizeSearch(e.query))))
-            }
             onChange={(e) => onChange(typeof e.value === 'object' && e.value ? e.value : null)}
-            placeholder="Busque pelo nome fantasia"
+            placeholder="Busque pelo nome, CNPJ ou cidade"
+            emptyMessage="Nenhuma empresa encontrada"
+            showEmptyMessage
             aria-invalid={props.invalid}
         />
     );

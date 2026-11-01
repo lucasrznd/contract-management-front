@@ -100,7 +100,6 @@ export default function ContractFilterDialog({ visible, onHide, onApply }: Contr
                         value={field.value}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
-                        showClear={isPeriod}
                         {...invalidProps(error('seller'), 'filter-seller')}
                     />
                 )}

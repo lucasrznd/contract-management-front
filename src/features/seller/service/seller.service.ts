@@ -1,7 +1,7 @@
 import { keepPreviousData } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
-import { useApiMutation, useApiQuery } from '@/shared/api/api.service';
-import { maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
+import { useApiFetch, useApiMutation, useApiQuery } from '@/shared/api/api.service';
+import { isPage, maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
 import type { Page, PageRequest } from '@/shared/types/api.types';
 import type { Seller, SellerFormValues } from '../types/seller.types';
 
@@ -9,6 +9,7 @@ export const isSellerPhotoUploadEnabled = import.meta.env.VITE_SELLER_PHOTO_UPLO
 
 const sellerKeys = {
     list: (request: PageRequest) => ['sellers', 'list', request] as const,
+    search: (text: string) => ['sellers', 'search', text] as const,
 };
 
 const findAll = async (request: PageRequest) => {
@@ -46,6 +47,24 @@ export function useSellerFindAll(request: PageRequest = {}, { enabled = true } =
         refetchInterval: REFETCH_INTERVAL,
         errorMessage: 'Não foi possível carregar os vendedores.',
     });
+}
+
+/** How many matches a type-ahead field lists. */
+const SEARCH_SIZE = 20;
+
+/** Sellers matching the text, by name, for type-ahead fields. Recent answers come from the cache. */
+export function useSellerSearch() {
+    return useApiFetch((text: string) => {
+        const request: PageRequest = { text, size: SEARCH_SIZE, sort: { field: 'name', direction: 'asc' } };
+        return {
+            queryKey: sellerKeys.search(text),
+            queryFn: async () => {
+                const data = await findAll(request);
+                return isPage<Seller>(data) ? data.content : [];
+            },
+            staleTime: 30_000,
+        };
+    }, 'Não foi possível buscar os vendedores.');
 }
 
 export function useSellerCreate() {
