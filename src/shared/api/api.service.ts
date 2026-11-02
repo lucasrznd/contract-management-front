@@ -16,11 +16,16 @@ import type { StandardError } from '@/shared/types/api.types';
 
 const DEFAULT_ERROR_MESSAGE = 'Não foi possível concluir a operação. Tente novamente em alguns instantes.';
 const CONNECTION_ERROR_MESSAGE = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+const IMAGE_TOO_LARGE_MESSAGE = 'A imagem é maior que 5 MB. Escolha um arquivo menor.';
+const INVALID_IMAGE_MESSAGE = 'Formato de imagem não suportado. Envie JPG, PNG ou WebP.';
 
 /** A message the user can act on: the API's own when it has a friendly version, `fallback` otherwise. */
 export function apiErrorMessage(error: unknown, fallback = DEFAULT_ERROR_MESSAGE) {
     if (!isAxiosError<StandardError>(error)) return fallback;
     if (!error.response) return CONNECTION_ERROR_MESSAGE;
+    if (error.response.status === 413) return IMAGE_TOO_LARGE_MESSAGE;
+    if (error.response.data?.errors?.some((fieldError) => fieldError.fieldName === 'image'))
+        return INVALID_IMAGE_MESSAGE;
     return errorMessageFormatter(error.response.data?.message) ?? fallback;
 }
 
