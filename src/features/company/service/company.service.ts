@@ -2,6 +2,7 @@ import { keepPreviousData } from '@tanstack/react-query';
 import { api, REFETCH_INTERVAL } from '@/shared/api/api';
 import { useApiFetch, useApiMutation, useApiQuery } from '@/shared/api/api.service';
 import { isPage, maskedNumberAsDigits, toPageParams } from '@/shared/api/pagination';
+import { toFormData } from '@/shared/api/formData';
 import type { Page, PageRequest } from '@/shared/types/api.types';
 import type { Company, CompanyFormValues } from '../types/company.types';
 
@@ -24,11 +25,11 @@ const count = async () => {
 };
 
 const create = async ({ data }: { data: CompanyFormValues }) => {
-    const response = await api.post<Company>('/companies', data);
+    const response = await api.post<Company>('/companies', toFormData(data));
     return response.data;
 };
 
-const update = ({ id, data }: { id: number; data: CompanyFormValues }) => api.put(`/companies/${id}`, data);
+const update = ({ id, data }: { id: number; data: CompanyFormValues }) => api.put(`/companies/${id}`, toFormData(data));
 
 const remove = ({ id }: { id: number }) => api.delete(`/companies/${id}`);
 

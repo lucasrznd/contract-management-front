@@ -43,7 +43,7 @@ export default function CompanyDatatable({ onNew, onEdit, onDelete }: CompanyDat
 
     const companyBody = (company: Company) => (
         <div className={tableStyles.entity}>
-            <UserAvatar name={company.tradeName} id={company.id} shape="square" />
+            <UserAvatar name={company.tradeName} id={company.id} src={company.urlImage} shape="square" />
             <div className={tableStyles.stack}>
                 <div className={tableStyles.title}>{company.tradeName}</div>
                 <div className={tableStyles.subtitle}>{company.businessName}</div>
