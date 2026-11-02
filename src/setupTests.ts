@@ -30,6 +30,10 @@ Object.defineProperty(window, 'matchMedia', {
 // jsdom doesn't implement scrolling; the layout scrolls to the top on every navigation.
 window.scrollTo = () => {};
 
+// jsdom doesn't implement object URLs, which image previews use.
+URL.createObjectURL = () => 'blob:preview';
+URL.revokeObjectURL = () => {};
+
 // jsdom never loads images, so react-easy-crop would never report the crop area. The stub reports
 // a fixed one right away; `cropImage` (which needs a canvas) is mocked in the tests that crop.
 vi.mock('react-easy-crop', async () => {

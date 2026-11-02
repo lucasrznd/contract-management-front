@@ -8,8 +8,8 @@ import { renderWithProviders } from '@/test/renderWithProviders';
 import { pageOf } from '@/test/pageOf';
 
 const sellers = [
-    { id: 1, name: 'Jorge Silva', phoneNumber: '19993818293', urlImage: '' },
-    { id: 2, name: 'Patrícia Gomes', phoneNumber: '43991234567', urlImage: '' },
+    { id: 1, name: 'Jorge Silva', phoneNumber: '19993818293', urlImage: 'https://storage/jorge.png' },
+    { id: 2, name: 'Patrícia Gomes', phoneNumber: '43991234567', urlImage: null },
     { id: 12, name: 'Ricardo Alves', phoneNumber: '1933815555', urlImage: '' },
 ];
 
@@ -28,6 +28,7 @@ test('lists the first page with code, masked phone and the total count', async (
 
     expect(await screen.findByText('Jorge Silva')).toBeInTheDocument();
     expect(screen.getByText('001')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Jorge Silva' })).toHaveAttribute('src', 'https://storage/jorge.png');
     expect(screen.getByText('(19) 3381-5555')).toBeInTheDocument();
     const title = screen.getByRole('heading', { name: 'Vendedores' });
     expect(within(title.parentElement!).getByText('42')).toBeInTheDocument();

@@ -1,9 +1,3 @@
-.root {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
 .dropzone {
     display: flex;
     align-items: center;
@@ -29,6 +23,10 @@
     border-radius: var(--radius-full);
     background: var(--color-gray-200);
     cursor: pointer;
+}
+
+.square {
+    border-radius: var(--radius-lg);
 }
 
 .avatarButton:focus-visible {
