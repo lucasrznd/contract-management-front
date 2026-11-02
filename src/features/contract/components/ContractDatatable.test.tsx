@@ -32,7 +32,14 @@ const base: Contract = {
 const contracts: Contract[] = [
     base,
     { ...base, id: 2, companyTradeName: 'Auto Peças Central', pdfPath: '\\\\server\\2.pdf', endDate: '2026-04-30' },
-    { ...base, id: 3, companyTradeName: 'Farmácia Saúde', token: 'abc', sellerName: 'Carlos Lima' },
+    {
+        ...base,
+        id: 3,
+        companyTradeName: 'Farmácia Saúde',
+        token: 'abc',
+        sellerName: 'Carlos Lima',
+        sellerImageUrl: 'https://storage/carlos.png',
+    },
 ];
 
 beforeEach(() => {
@@ -79,6 +86,10 @@ test('shows the term status and the document action of each contract', async () 
     expect(within(rowOf('Auto Peças Central')).getByRole('button', { name: /Ver PDF/ })).toBeInTheDocument();
     expect(within(rowOf('Farmácia Saúde')).getByRole('button', { name: /Assinatura/ })).toBeInTheDocument();
     expect(within(rowOf('Padaria Pão Quente')).getByText('OP 2025-031')).toBeInTheDocument();
+    expect(within(rowOf('Farmácia Saúde')).getByRole('img', { name: 'Carlos Lima' })).toHaveAttribute(
+        'src',
+        'https://storage/carlos.png',
+    );
 
     await userEvent.click(within(rowOf('Auto Peças Central')).getByRole('button', { name: /Ver PDF/ }));
     expect(onOpenDocument).toHaveBeenCalledWith(contracts[1]);

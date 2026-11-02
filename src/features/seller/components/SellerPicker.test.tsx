@@ -7,8 +7,8 @@ import { renderWithProviders } from '@/test/renderWithProviders';
 import { pageOf } from '@/test/pageOf';
 
 const sellers = [
-    { id: 1, name: 'João Silva', phoneNumber: '19993818293', urlImage: '' },
-    { id: 2, name: 'Joana Lima', phoneNumber: '43991234567', urlImage: '' },
+    { id: 1, name: 'João Silva', phoneNumber: '19993818293', urlImage: 'https://storage/joao.png' },
+    { id: 2, name: 'Joana Lima', phoneNumber: '43991234567', urlImage: null },
 ];
 
 test('suggests the sellers the API finds for the text and picks one', async () => {
@@ -18,6 +18,7 @@ test('suggests the sellers the API finds for the text and picks one', async () =
 
     await userEvent.type(screen.getByRole('combobox'), 'joao');
 
+    expect(await screen.findByAltText('João Silva')).toHaveAttribute('src', 'https://storage/joao.png');
     await userEvent.click(await screen.findByText('João Silva'));
     expect(onChange).toHaveBeenCalledWith(sellers[0]);
     expect(get).toHaveBeenCalledWith('/sellers', {

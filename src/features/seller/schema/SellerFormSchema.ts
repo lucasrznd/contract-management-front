@@ -7,7 +7,7 @@ export const sellerFormSchema = z.object({
         .string()
         .min(1, 'Informe o telefone.')
         .refine((value) => clearPhoneNumber(value).length >= 10, 'Telefone inválido. Use (DD) 9 9999-9999.'),
-    urlImage: z.string(),
+    image: z.instanceof(File).optional(),
 });
 
 export type SellerFormFields = z.infer<typeof sellerFormSchema>;

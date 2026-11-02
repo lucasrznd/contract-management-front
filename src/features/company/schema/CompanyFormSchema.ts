@@ -25,6 +25,7 @@ export const companyFormSchema = z.object({
     avenueName: required('Informe o bairro.'),
     city: required('Informe a cidade.'),
     state: required('Informe o estado.').length(2, 'Use a sigla do estado (ex.: PR).'),
+    image: z.instanceof(File).optional(),
 });
 
 export type CompanyFormFields = z.infer<typeof companyFormSchema>;

@@ -5,6 +5,8 @@ export interface StandardError {
     error: string;
     message: string;
     path: string;
+    /** Only on 400 validation errors: which fields were rejected and why. */
+    errors?: { fieldName: string; message: string }[];
 }
 
 /** Page returned by the list endpoints (Spring Data `Page`, serialized via DTO). */

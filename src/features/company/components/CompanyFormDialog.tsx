@@ -5,6 +5,7 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/shared/components/ui/Modal';
 import FormField from '@/shared/components/ui/FormField';
+import ImageUploadField from '@/shared/components/ui/ImageUploadField';
 import { FormGrid, FormSection, FormWide } from '@/shared/components/ui/FormLayout';
 import { useToast } from '@/shared/components/ui/toast/ToastProvider';
 import {
@@ -39,8 +40,11 @@ function toPayload(fields: CompanyFormFields, id?: number): CompanyFormValues {
         avenueName: fields.avenueName.trim(),
         city: fields.city.trim(),
         state: fields.state.trim().toUpperCase(),
+        image: fields.image,
     };
 }
+
+type TextFieldName = Exclude<keyof CompanyFormFields, 'image'>;
 
 interface CompanyFormDialogProps {
     visible: boolean;
@@ -104,12 +108,12 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
         );
     };
 
-    const field = (name: keyof CompanyFormFields, options?: Parameters<typeof textFieldProps>[3]) =>
+    const field = (name: TextFieldName, options?: Parameters<typeof textFieldProps>[3]) =>
         textFieldProps(form, name, `company-${name}`, options);
-    const error = (name: keyof CompanyFormFields) => errors[name]?.message;
+    const error = (name: TextFieldName) => errors[name]?.message;
 
     // Filled-in fields are revalidated only if they were showing an error.
-    const fill = (name: keyof CompanyFormFields, value: string) =>
+    const fill = (name: TextFieldName, value: string) =>
         form.setValue(name, value, { shouldValidate: !!form.getFieldState(name).error });
 
     // Typing a complete CEP fills in the address (street and district only when still empty).
@@ -154,6 +158,16 @@ export default function CompanyFormDialog({ visible, onHide, company }: CompanyF
                 />
 
                 <ModalBody>
+                    <ImageUploadField
+                        title="Logo da empresa"
+                        name={form.watch('tradeName')}
+                        id={company?.id}
+                        shape="square"
+                        currentUrl={company?.urlImage}
+                        file={form.watch('image') ?? null}
+                        onFileChange={(file) => form.setValue('image', file ?? undefined)}
+                    />
+
                     <FormSection title="Dados da empresa">
                         <FormGrid>
                             <FormField

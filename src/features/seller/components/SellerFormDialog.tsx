@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from 'primereact/button';
@@ -7,13 +7,8 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/shared/components/
 import FormField from '@/shared/components/ui/FormField';
 import { useToast } from '@/shared/components/ui/toast/ToastProvider';
 import { PhoneIcon, UserIcon } from '@/shared/components/icons';
-import SellerPhotoField from './SellerPhotoField';
-import {
-    useSellerCreate,
-    useSellerUpdate,
-    isSellerPhotoUploadEnabled,
-    useSellerPhotoUpload,
-} from '../service/seller.service';
+import ImageUploadField from '@/shared/components/ui/ImageUploadField';
+import { useSellerCreate, useSellerUpdate } from '../service/seller.service';
 import { clearPhoneNumber, formatCode, maskPhone } from '@/shared/helpers/stringUtils.helper';
 import { textFieldProps } from '@/shared/helpers/form.helper';
 import { sellerFormSchema, type SellerFormFields } from '../schema/SellerFormSchema';
@@ -31,10 +26,8 @@ interface SellerFormDialogProps {
 export default function SellerFormDialog({ visible, onHide, seller }: SellerFormDialogProps) {
     const titleId = useId();
     const toast = useToast();
-    const [photoFile, setPhotoFile] = useState<File | null>(null);
     const { mutate: createSeller, isPending: isCreating } = useSellerCreate();
     const { mutate: updateSeller, isPending: isUpdating } = useSellerUpdate();
-    const { mutate: uploadPhoto, isPending: isUploading } = useSellerPhotoUpload();
     const isEditing = seller !== null;
 
     const form = useForm<SellerFormFields>({
@@ -44,17 +37,16 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
         defaultValues: {
             name: seller?.name ?? '',
             phoneNumber: seller ? maskPhone(seller.phoneNumber) : '',
-            urlImage: seller?.urlImage ?? '',
         },
     });
     const { errors } = form.formState;
 
-    const save = (values: SellerFormFields, urlImage: string) => {
+    const onSubmit = (values: SellerFormFields) => {
         const data: SellerFormValues = {
             id: seller?.id,
             name: values.name.trim(),
             phoneNumber: clearPhoneNumber(values.phoneNumber),
-            urlImage,
+            image: values.image,
         };
 
         if (isEditing) {
@@ -80,17 +72,8 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
         );
     };
 
-    // A chosen photo is uploaded first; the seller is saved with the URL it gets back.
-    const onSubmit = (values: SellerFormFields) => {
-        if (isSellerPhotoUploadEnabled && photoFile) {
-            uploadPhoto({ file: photoFile }, { onSuccess: (url) => save(values, url) });
-            return;
-        }
-        save(values, values.urlImage);
-    };
-
     const name = form.watch('name');
-    const urlImage = form.watch('urlImage');
+    const image = form.watch('image');
     const nameError = errors.name?.message;
     const phoneError = errors.phoneNumber?.message;
 
@@ -105,13 +88,13 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
                 />
 
                 <ModalBody>
-                    <SellerPhotoField
+                    <ImageUploadField
+                        title="Foto do vendedor"
                         name={name}
-                        sellerId={seller?.id}
-                        file={photoFile}
-                        onFileChange={setPhotoFile}
-                        url={urlImage}
-                        onUrlChange={(url) => form.setValue('urlImage', url)}
+                        id={seller?.id}
+                        currentUrl={seller?.urlImage}
+                        file={image ?? null}
+                        onFileChange={(file) => form.setValue('image', file ?? undefined)}
                     />
 
                     <div className={styles.fields}>
@@ -147,7 +130,7 @@ export default function SellerFormDialog({ visible, onHide, seller }: SellerForm
                     <Button
                         type="submit"
                         label={isEditing ? 'Salvar alterações' : 'Cadastrar vendedor'}
-                        loading={isUploading || isCreating || isUpdating}
+                        loading={isCreating || isUpdating}
                     />
                 </ModalFooter>
             </form>
